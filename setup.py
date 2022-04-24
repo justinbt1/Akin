@@ -10,5 +10,5 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     packages=['akin'],
-    install_requires=['numpy']
+    install_requires=['numpy', 'cython', 'mmh3']
 )
