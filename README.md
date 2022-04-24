@@ -1,5 +1,5 @@
 # Akin
-![Python Version](https://img.shields.io/badge/Python-3.6%20%7C%203.9-blue.svg)
+![Python Version](https://img.shields.io/badge/Python-3.6%20%7C%203.10-blue.svg)
 [![Build Status](https://travis-ci.com/justinbt1/Akin.svg?token=zkfq5qHfxYgqNW4sepWo&branch=main&status=passed)](https://travis-ci.com/github/justinbt1/Akin)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 <br>
