@@ -147,17 +147,11 @@ class MinHash:
 
             for shingle in document:
                 if self.hash_bits == 64:
-                    hash_value = mmh3.hash64(
-                        shingle, int(seed)
-                    )[0]
+                    hash_value = mmh3.hash64(shingle, int(seed))[0]
                 elif self.hash_bits == 32:
-                    hash_value = mmh3.hash(
-                        shingle, int(seed)
-                    )
+                    hash_value = mmh3.hash(shingle, int(seed))
                 else:
-                    hash_value = mmh3.hash128(
-                        shingle, int(seed)
-                    )
+                    hash_value = mmh3.hash128(shingle, int(seed))
 
                 if not self._min_value:
                     self._min_value = hash_value
@@ -194,17 +188,11 @@ class MinHash:
 
         for shingle in document:
             if self.hash_bits == 64:
-                hashed_shingle = mmh3.hash64(
-                    shingle, self._hash_seeds
-                )[0]
+                hashed_shingle = mmh3.hash64(shingle, self._hash_seeds)[0]
             elif self.hash_bits == 32:
-                hashed_shingle = mmh3.hash(
-                    shingle, self._hash_seeds
-                )
+                hashed_shingle = mmh3.hash(shingle, self._hash_seeds)
             else:
-                hashed_shingle = mmh3.hash128(
-                    shingle, self._hash_seeds
-                )
+                hashed_shingle = mmh3.hash128(shingle, self._hash_seeds)
 
             heapq.heappush(signature, hashed_shingle)
 
