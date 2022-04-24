@@ -73,6 +73,7 @@ print(adjacency_list)
 ### MinHash
 Creates a MinHash object that contains matrix of Minhash Signatures for each text.
 
+
 #### MinHash Parameters
 ``` python
 MinHash(text, n_gram=9, n_gram_type='char', permutations=100, hash_bits=64, seed=None)
@@ -82,7 +83,7 @@ MinHash(text, n_gram=9, n_gram_type='char', permutations=100, hash_bits=64, seed
 Iterable containing strings of text for each text in a corpus.<br><br>
 **n_gram**  
 `int, optional, default: 9`  
-Size of each overlapping text shingle to break text into prior to hashing. Shingle size should be carefully selected dependant on average text length as too low a shingle size will yield false similarities, whereas too high a shingle size will fail to return similar documents.<br><br>
+Size of each overlapping text shingle to break text into prior to hashing. Shingle size should be carefully selected dependent on average text length as too low a shingle size will yield false similarities, whereas too high a shingle size will fail to return similar documents.<br><br>
 **n_gram_type**  
 `str, optional, default: 'char'`  
 Type of n gram to use for shingles, must be 'char' to split text into character shingles or 'term' to split text into overlapping sequences of words.<br><br>
