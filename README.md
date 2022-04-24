@@ -25,13 +25,13 @@ content = [
 ]
 
 # Labels for each text in content.
-labels = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+content_labels = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 
 # Create MinHash object.
 minhash = MinHash(content, n_gram=9, permutations=100, hash_bits=64, seed=3)
 
 # Create LSH model.
-lsh = LSH(minhash, labels, no_of_bands=50)
+lsh = LSH(minhash, content_labels, no_of_bands=50)
 
 # Query to find near duplicates for text 1.
 print(lsh.query(1, min_jaccard=0.5))
