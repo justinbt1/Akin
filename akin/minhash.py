@@ -47,12 +47,22 @@ class MinHash:
                 'Only "char" and "term" n_gram types are supported.'
             )
         self.n_gram_type = n_gram_type
+
         self.permutations = permutations
+
         if hash_bits not in [32, 64, 128]:
             raise ValueError(
                 'Only 32, 64 and 128 bit hashes are supported.'
             )
         self.hash_bits = hash_bits
+
+        self.seed = None
+        if seed:
+            self.seed = seed
+            np.random.seed(seed)
+
+        self._hash_seeds = self._generate_random_seeds()
+
         if method not in [
             'multi_hash',
             'k_smallest_values'
@@ -61,21 +71,24 @@ class MinHash:
                 'Only "multi_hash" and "k_smallest_value" hash methods are supported.'
             )
         self.method = method
-        self.seed = None
-        if seed:
-            self.seed = seed
-            np.random.seed(seed)
-        if method == 'multi_hash':
-            self._hash_seeds = np.random.randint(
-                low=1, high=100000000, size=permutations
-            )
-        else:
-            self._hash_seeds = np.random.randint(
-                low=1, high=100000000
-            )
+
         # Run methods.
         self._shingles = self._k_shingles(text)
         self.signatures = self._min_hash()
+
+    def _generate_random_seeds(self):
+        """ Generates a list of pseudo-random integers to use as hash seeds.
+
+        Returns:
+            np.array: Hash seed integers.
+
+        """
+        if self.method == 'multi_hash':
+            hash_seeds = np.random.randint(low=1, high=100000000, size=self.permutations)
+        else:
+            hash_seeds = np.random.randint(low=1, high=100000000)
+
+        return hash_seeds
 
     def _k_shingles(self, texts):
         """ Generates shingles for each input text.
@@ -91,24 +104,26 @@ class MinHash:
 
         """
         trim_overflow = (self.n_gram - 1) * -1
+
         if type(texts) == str:
             texts = [texts]
+
         for text in texts:
             if self.n_gram_type == 'char':
                 shingles = [
-                               text[char:char + self.n_gram]
-                               for char in range(len(text))
-                           ][:trim_overflow]
+                    text[char:char + self.n_gram] for char in range(len(text))
+                ][:trim_overflow]
             else:
                 terms = text.split()
                 shingles = [
-                               ' '.join(terms[term:term + self.n_gram])
-                               for term in range(len(terms))
-                           ][:trim_overflow]
+                    ' '.join(terms[term:term + self.n_gram]) for term in range(len(terms))
+                ][:trim_overflow]
+
             if not shingles:
                 raise ValueError(
                     'Shingle "n_gram" size must not exceed minimum text length.'
                 )
+
             yield shingles
 
     def _multi_hash(self, document):
@@ -129,6 +144,7 @@ class MinHash:
         signature = []
         for seed in np.nditer(self._hash_seeds):
             self._min_value = None
+
             for shingle in document:
                 if self.hash_bits == 64:
                     hash_value = mmh3.hash64(
@@ -142,11 +158,14 @@ class MinHash:
                     hash_value = mmh3.hash128(
                         shingle, int(seed)
                     )
+
                 if not self._min_value:
                     self._min_value = hash_value
                 elif self._min_value > hash_value:
                     self._min_value = hash_value
+
             signature.append(self._min_value)
+
         return signature
 
     def _k_smallest_hash(self, document):
@@ -167,10 +186,12 @@ class MinHash:
         signature = []
         # Uses a heap to make calculating n smallest values more efficient.
         heapq.heapify(signature)
+
         if len(document) <= self.permutations:
             raise ValueError(
                 'N permutations must not be >= n shingles for k_smallest_values method'
             )
+
         for shingle in document:
             if self.hash_bits == 64:
                 hashed_shingle = mmh3.hash64(
@@ -184,7 +205,9 @@ class MinHash:
                 hashed_shingle = mmh3.hash128(
                     shingle, self._hash_seeds
                 )
+
             heapq.heappush(signature, hashed_shingle)
+
         return heapq.nsmallest(self.permutations, signature)
 
     def _min_hash(self):
@@ -203,4 +226,5 @@ class MinHash:
             elif self.method == 'k_smallest_values':
                 signature = self._k_smallest_hash(document)
                 signatures.append(signature)
+
         return np.array(signatures)
