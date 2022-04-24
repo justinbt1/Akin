@@ -42,6 +42,7 @@ class MinHash:
 
         """
         self.n_gram = n_gram
+
         if n_gram_type not in ['char', 'term']:
             raise ValueError(
                 'Only "char" and "term" n_gram types are supported.'
@@ -61,8 +62,6 @@ class MinHash:
             self.seed = seed
             np.random.seed(seed)
 
-        self._hash_seeds = self._generate_random_seeds()
-
         if method not in [
             'multi_hash',
             'k_smallest_values'
@@ -71,6 +70,8 @@ class MinHash:
                 'Only "multi_hash" and "k_smallest_value" hash methods are supported.'
             )
         self.method = method
+
+        self._hash_seeds = self._generate_random_seeds()
 
         # Run methods.
         self._shingles = self._k_shingles(text)
