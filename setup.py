@@ -6,7 +6,7 @@ readme.close()
 
 setup(
     name='akin',
-    version='1.0.0',
+    version='0.1.0',
     long_description=long_description,
     long_description_content_type='text/markdown',
     packages=['akin'],
