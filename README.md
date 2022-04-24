@@ -67,14 +67,6 @@ print(adjacency_list)
         7: [], 8: [], 9: [], 'doc1': [1, 4], 'doc2': [2]
     }
 
-# Returns edge list for use creating a weighted graph.
-edge_list = lsh.edge_list(min_jaccard=0.5, jaccard_weighted=True)
-print(edge_list)
->>> [
-        ('doc2', 2, 1.0), ('doc1', 1, 1.0), ('doc1', 8, 0.5), 
-        ('doc1', 4, 0.58), (8, 1, 0.5), (4, 1, 0.58)
-    ]
-
 ```
 ## API Guide
 
@@ -197,14 +189,6 @@ Returns an adjacency list that can be used to create a text similarity graph.<br
 .adjacency_list(min_jaccard=None, sensitivity=1)
 ```  
 <b>min_jaccard:</b> Jaccard similarity threshold texts have to exceed to be returned as similar.<br>
-<b>sensitivity:</b> Number of buckets texts must share to be returned as similar.<br><br>
-<b>edge_list</b><br>
-Returns a list of edges as tuples of similar pairs, that can be used to create a text similarity graph.<br>
-``` python
-.edge_list(min_jaccard=None, jaccard_weighted=False, sensitivity=1)
-```  
-<b>min_jaccard:</b> Jaccard similarity threshold texts have to exceed to be returned as a pair of similar texts.<br>
-<b>jaccard_weighted:</b> Return a list of edges as 3 tuples including text similarity pairs and estimated Jaccard similarity score.<br>
 <b>sensitivity:</b> Number of buckets texts must share to be returned as similar.<br><br>
 
 #### LSH Properties
