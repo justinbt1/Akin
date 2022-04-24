@@ -105,17 +105,6 @@ def test_lsh_adjacency_list():
     }
 
 
-def test_lsh_edge_list():
-    lsh = LSH(minhash, labels)
-    with pytest.raises(ValueError):
-        lsh.edge_list(sensitivity=101)
-    assert lsh.edge_list() == [(8, 1), (8, 4), (5, 3), (4, 1)]
-    assert lsh.edge_list(sensitivity=20) == [(8, 1), (5, 3), (4, 1)]
-    assert lsh.edge_list(min_jaccard=0.7) == []
-    assert lsh.edge_list(min_jaccard=0.6) == [(5, 3)]
-    assert lsh.edge_list(jaccard_weighted=True, min_jaccard=0.55) == [(5, 3, 0.6), (4, 1, 0.58)]
-
-
 def test_lsh_errors():
     with pytest.raises(ValueError):
         LSH(content)
