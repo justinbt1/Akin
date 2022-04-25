@@ -50,6 +50,7 @@ class LSH:
         """
         if not self.no_of_bands:
             self.no_of_bands = self.permutations // 2
+
         for label, signature in zip(labels, signatures):
             bands = np.hsplit(
                 np.array(signature), self.no_of_bands
@@ -81,18 +82,22 @@ class LSH:
             matches.remove(label)
             for match in matches:
                 candidates[match] += 1
+
         # Apply sensitivity threshold.
         if sensitivity > 1:
             for key in list(candidates):
                 if candidates[key] < sensitivity:
                     del candidates[key]
+
         # Apply Jaccard threshold and unzip pairs.
         if jaccard:
             for key in list(candidates):
                 jaccard_ratio = candidates[key] / self.no_of_bands
                 if jaccard_ratio < jaccard:
                     del candidates[key]
+
         candidates = list(candidates)
+
         return candidates
 
     def update(self, minhash, new_labels):
@@ -114,15 +119,18 @@ class LSH:
                 raise ValueError(
                     'At least one provided label already exists in model.'
                 )
+
             if self.permutations != minhash.permutations:
                 raise ValueError(
                     'Number of permutations in minhash must be {} to match LSH model.'.format(
                         self.permutations
                     )
                 )
+
         else:
             # Create parameters for new model.
             self.permutations = minhash.permutations
+
         # Update model.
         self._lsh(minhash.signatures, new_labels)
 
@@ -149,11 +157,14 @@ class LSH:
             raise ValueError(
                 'Sensitivity must be <= no of bands.'
             )
+
         buckets = self._i_bucket.get(label)
+
         if not buckets:
             raise KeyError(
                 'Label {} does not exist in model'.format(label)
             )
+
         return self._candidate_duplicates(
             buckets, label, sensitivity, min_jaccard
         )
@@ -166,14 +177,18 @@ class LSH:
 
         """
         buckets = self._i_bucket.get(label)
+
         if not buckets:
             raise KeyError(
                 'Label {} does not exist in model.'.format(label)
             )
+
         for bucket in buckets:
             self._buckets[bucket].remove(label)
+
             if not self._buckets[bucket]:
                 del self._buckets[bucket]
+
         del self._i_bucket[label]
 
     def contains(self):
@@ -207,11 +222,14 @@ class LSH:
             raise ValueError(
                 'Sensitivity must be <= no of bands.'
             )
+
         adjacency_list = {}
+
         for label in self._i_bucket.keys():
             buckets = self._i_bucket.get(label)
             candidates = self._candidate_duplicates(
                 buckets, label, sensitivity, min_jaccard
             )
             adjacency_list[label] = candidates
+
         return adjacency_list
