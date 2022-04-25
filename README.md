@@ -1,7 +1,7 @@
 # Akin
 ![Python Version](https://img.shields.io/badge/Python-3.6%20%7C%203.10-blue.svg)
-[![Build Status](https://travis-ci.com/justinbt1/Akin.svg?token=zkfq5qHfxYgqNW4sepWo&branch=main&status=passed)](https://travis-ci.com/github/justinbt1/Akin)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![Build Status](https://travis-ci.com/justinbt1/Akin.svg?token=zkfq5qHfxYgqNW4sepWo&branch=main&status=passed)](https://travis-ci.com/github/justinbt1/Akin)
 <br>
 Python library for detecting near duplicate texts in a corpus at scale using Locality Sensitive Hashing, as described in chapter three of [Mining Massive Datasets](http://infolab.stanford.edu/~ullman/mmds/ch3.pdf). This algorithm identifies similar texts in a corpus efficiently by estimating their Jaccard similarity with sub-linear time complexity. This can be used to detect near duplicate texts at scale or locate different versions of a document. 
 
