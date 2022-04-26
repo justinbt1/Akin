@@ -77,7 +77,15 @@ Creates a MinHash object that contains matrix of Minhash Signatures for each tex
 
 #### MinHash Parameters
 ``` python
-MinHash(text, method='multi_hash', n_gram=9, n_gram_type='char', permutations=100, hash_bits=64, seed=None)
+MinHash(
+    text, 
+    method='multi_hash', 
+    n_gram=9, 
+    n_gram_type='char', 
+    permutations=100, 
+    hash_bits=64, 
+    seed=None
+)
 ```  
 **text**  
 `{list or ndarray}`  
