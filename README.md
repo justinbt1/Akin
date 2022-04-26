@@ -86,15 +86,17 @@ Iterable containing strings of text for each text in a corpus.<br><br>
 `str, optional, default: 'multi_hash'`  
 Method for random sampling via hashing, must be 'multi_hash' or 'k_smallest_values'.<br>
 If multi_hash selected texts are hashed once per permutation and the minimum hash value selected each time to 
-construct a signature.<br>
+construct a signature.<br>  
 If k_smallest_values selected each text is hashed once and k smallest values selected for k permutations. 
 This method is less computationally intensive than multi_hash but also less stable.<br><br>
 **n_gram**  
 `int, optional, default: 9`  
 Size of each overlapping text shingle to break text into prior to hashing. Shingle size should be carefully selected 
 dependent on average text length as too low a shingle size will yield false similarities, whereas too high a shingle 
-size will fail to return similar documents. For character shingles a size of 5 is recommended for shorter 
-texts such as emails, the default size of 9 is recommended for longer texts or documents.<br><br>
+size will fail to return similar documents.  
+
+For character shingles a size of 5 is recommended for shorter texts such as emails, the default size of 9 is 
+recommended for longer texts or documents.<br><br>
 **n_gram_type**  
 `str, optional, default: 'char'`  
 Type of n gram to use for shingles, must be 'char' to split text into character shingles or 'term' to split text into 
