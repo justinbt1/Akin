@@ -21,23 +21,23 @@ class MinHash:
     def __init__(
             self,
             text,
+            method='multi_hash',
             n_gram=9,
             n_gram_type='char',
             permutations=100,
             hash_bits=64,
-            method='multi_hash',
             seed=None
     ):
         """ Generates a minhash signature matrix for texts in a corpus.
 
         Args:
             text (list, np.array): Iterable containing text content of each document.
+            method (str): Method to be used for minhash function, must be multi_hash
+                or k_smallest_values.
             n_gram (int): Number of characters to be used in each shingle.
             n_gram_type (str): Type of n gram to use for shingles, must be char or term.
             permutations (int): Number of hash values in each document signature.
             hash_bits (int): Hash value size, must be 32, 64 or 128 bit.
-            method (str): Method to be used for minhash function, must be multi_hash
-                or k_smallest_values.
             seed (int): Seeds from which to generate random hash function.
 
         """
