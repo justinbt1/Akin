@@ -2,6 +2,7 @@
 ![Python Version](https://img.shields.io/badge/Python-3.6%20%7C%203.10-blue.svg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![Build Status](https://app.travis-ci.com/justinbt1/Akin.svg?branch=main)](https://app.travis-ci.com/justinbt1/Akin)
+[![Downloads](https://pepy.tech/badge/akin)](https://pepy.tech/project/akin)
 <br>
 Python library for detecting near duplicate texts in a corpus at scale using Locality Sensitive Hashing, as described in chapter three of [Mining Massive Datasets](http://infolab.stanford.edu/~ullman/mmds/ch3.pdf). This algorithm identifies similar texts in a corpus efficiently by estimating their Jaccard similarity with sub-linear time complexity. This can be used to detect near duplicate texts at scale or locate different versions of a document. 
 
@@ -76,31 +77,44 @@ Creates a MinHash object that contains matrix of Minhash Signatures for each tex
 
 #### MinHash Parameters
 ``` python
-MinHash(text, n_gram=9, n_gram_type='char', permutations=100, hash_bits=64, seed=None)
+MinHash(text, method='multi_hash', n_gram=9, n_gram_type='char', permutations=100, hash_bits=64, seed=None)
 ```  
 **text**  
 `{list or ndarray}`  
 Iterable containing strings of text for each text in a corpus.<br><br>
-**n_gram**  
-`int, optional, default: 9`  
-Size of each overlapping text shingle to break text into prior to hashing. Shingle size should be carefully selected dependent on average text length as too low a shingle size will yield false similarities, whereas too high a shingle size will fail to return similar documents.<br><br>
-**n_gram_type**  
-`str, optional, default: 'char'`  
-Type of n gram to use for shingles, must be 'char' to split text into character shingles or 'term' to split text into overlapping sequences of words.<br><br>
-**permutations**  
-`int, optional, default: 100`  
-Number of randomly sampled hash values to use for generating each texts minhash signature. Intuitively the larger the number of permutations, the more accurate the estimated Jaccard similarity between the texts but longer the algorithm will take to run.<br><br>
-**hash_bits**  
-`int, optional, default: 64`  
-Hash value size to be used to generate minhash signatures from shingles, must be 32, 64 or 128 bit. Hash value size should be chosen based on text length and a trade off between performance and accuracy. Lower hash values risk false hash collisions leading to false similarities between documents for larger corpora of texts.<br><br>
 **method**  
 `str, optional, default: 'multi_hash'`  
 Method for random sampling via hashing, must be 'multi_hash' or 'k_smallest_values'.<br>
-If multi_hash selected texts are hashed once per permutation and the minimum hash value selected each time to construct a signature.<br>
-If k_smallest_values selected each text is hashed once and k smallest values selected for k permutations. This method is much faster than multi_hash but far less stable.<br><br>
+If multi_hash selected texts are hashed once per permutation and the minimum hash value selected each time to 
+construct a signature.<br>  
+If k_smallest_values selected each text is hashed once and k smallest values selected for k permutations. 
+This method is less computationally intensive than multi_hash but also less stable.<br><br>
+**n_gram**  
+`int, optional, default: 9`  
+Size of each overlapping text shingle to break text into prior to hashing. Shingle size should be carefully selected 
+dependent on average text length as too low a shingle size will yield false similarities, whereas too high a shingle 
+size will fail to return similar documents.  
+
+For character shingles a size of 5 is recommended for shorter texts such as emails, the default size of 9 is 
+recommended for longer texts or documents.<br><br>
+**n_gram_type**  
+`str, optional, default: 'char'`  
+Type of n gram to use for shingles, must be 'char' to split text into character shingles or 'term' to split text into 
+overlapping sequences of words.<br><br>
+**permutations**  
+`int, optional, default: 100`  
+Number of randomly sampled hash values to use for generating each texts minhash signature. Intuitively the larger the 
+number of permutations, the more accurate the estimated Jaccard similarity between the texts but longer the algorithm 
+will take to run.<br><br>
+**hash_bits**  
+`int, optional, default: 64`  
+Hash value size to be used to generate minhash signatures from shingles, must be 32, 64 or 128 bit. Hash value size 
+should be chosen based on text length and a trade off between performance and accuracy. Lower hash values risk false 
+hash collisions leading to false similarities between documents for larger corpora of texts.<br><br>
 **seed**  
 `int, optional, default: None`  
-Seed from which to generate random hash function, necessary for reproducibility or to allow updating of the LSH model with new minhash values later.<br><br>
+Seed from which to generate random hash function, necessary for reproducibility or to allow updating of the LSH model 
+with new minhash values later.<br><br>
 
 #### MinHash Properties
 **n_gram:** `int`  
