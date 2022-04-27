@@ -4,7 +4,7 @@
 [![Build Status](https://app.travis-ci.com/justinbt1/Akin.svg?branch=main)](https://app.travis-ci.com/justinbt1/Akin)
 [![Downloads](https://pepy.tech/badge/akin)](https://pepy.tech/project/akin)
 <br>
-Python library for detecting near duplicate texts in a corpus at scale using Locality Sensitive Hashing, as described in chapter three of [Mining Massive Datasets](http://infolab.stanford.edu/~ullman/mmds/ch3.pdf). This algorithm identifies similar texts in a corpus efficiently by estimating their Jaccard similarity with sub-linear time complexity. This can be used to detect near duplicate texts at scale or locate different versions of a document. 
+Python library for detecting near duplicate texts in a corpus at scale using Locality Sensitive Hashing, based on the algorithm described in chapter three of [Mining Massive Datasets](http://infolab.stanford.edu/~ullman/mmds/ch3.pdf). This algorithm identifies similar texts in a corpus efficiently by estimating their Jaccard similarity with sub-linear time complexity. This can be used to detect near duplicate texts at scale or locate different versions of a document. 
 
 ##  Example Usage
 ``` python
