@@ -16,7 +16,8 @@ Install from PyPI using pip:
 Note for the ARM Apple M1 architecture some dependencies may need to be installed separately in advance.
 
 ### API Documentation
-See the full documentation here for API and usage guide.
+See the [full documentation here](https://github.com/justinbt1/Akin/blob/dev/docs/api_documentation.md) for API 
+and usage guide.
 
 ### Quick Start Example
 ``` python
