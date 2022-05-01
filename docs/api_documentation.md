@@ -23,7 +23,7 @@ Iterable containing strings of text for each text in a corpus.<br><br>
 Method for random sampling via hashing, must be 'multi_hash' or 'k_smallest_values'.<br>
 If multi_hash selected texts are hashed once per permutation and the minimum hash value selected each time to 
 construct a signature.<br>  
-If k_smallest_values selected each text is hashed once and k smallest values selected for k permutations. 
+If bottom_k selected each text is hashed once and the k-smallest values selected for k permutations. 
 This method is less computationally intensive than multi_hash but also less stable.<br><br>
 **n_gram**  
 `int, optional, default: 9`  
