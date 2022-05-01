@@ -53,7 +53,6 @@ class MinHash:
             )
         self.hash_bits = hash_bits
 
-        self.seed = None
         if seed:
             self.seed = seed
             np.random.seed(seed)
@@ -119,7 +118,9 @@ class MinHash:
 
 class MultiHash(MinHash):
     def __init__(self):
-        super().__init__(self)
+        super(MinHash, self).__init__()
+        self.signatures = self.multi_hash()
+        self._hash_seeds = np.random.randint(low=1, high=100000000, size=self.permutations)
 
     def multi_hash(self):
         """ Generates a texts minhash signature using multi-hash method.
@@ -133,12 +134,10 @@ class MultiHash(MinHash):
             list: List of text signatures generated using bottom-k neighbours method.
 
         """
-        hash_seeds = np.random.randint(low=1, high=100000000, size=self.permutations)
-
         signatures = []
         for document in self._shingles:
             signature = []
-            for seed in np.nditer(hash_seeds):
+            for seed in np.nditer(self._hash_seeds):
                 min_value = None
 
                 for shingle in document:
@@ -159,6 +158,7 @@ class MultiHash(MinHash):
 class BottomK(MinHash):
     def __init__(self):
         super().__init__(self)
+        self.signatures = self.k_smallest_hash()
 
     def k_smallest_hash(self):
         """ Generates a texts minhash signature using k smallest neighbours method.
