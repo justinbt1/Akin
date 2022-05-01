@@ -72,11 +72,11 @@ def k_smallest_hash_tests(first_hash, second_hash, hash_size):
         content,
         permutations=53,
         hash_bits=hash_size,
-        method='k_smallest_values',
+        method='bottom_k',
         seed=seed
     )
     assert minhash._hash_seeds == 83957611
-    assert minhash.method == 'k_smallest_values'
+    assert minhash.method == 'bottom_k'
     assert type(minhash.signatures) is np.ndarray
     assert minhash.signatures.shape == (9, 53)
     signature = minhash.signatures
@@ -87,7 +87,7 @@ def k_smallest_hash_tests(first_hash, second_hash, hash_size):
             content,
             permutations=200,
             hash_bits=hash_size,
-            method='k_smallest_values',
+            method='bottom_k',
             seed=seed
         )
 
