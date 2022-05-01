@@ -19,6 +19,7 @@ class MinHash:
 
     def __init__(
             self,
+            text,
             n_gram=9,
             n_gram_type='char',
             permutations=100,
@@ -28,6 +29,7 @@ class MinHash:
         """ Generates a minhash signature matrix for texts in a corpus.
 
         Args:
+            text (list, np.array): Iterable containing text content of each document.
             n_gram (int): Number of characters to be used in each shingle.
             n_gram_type (str): Type of n gram to use for shingles, must be char or term.
             permutations (int): Number of hash values in each document signature.
@@ -55,6 +57,8 @@ class MinHash:
         if seed:
             self.seed = seed
             np.random.seed(seed)
+
+        self._shingles = self._k_shingles(text)
 
     def _k_shingles(self, texts):
         """ Generates shingles for each input text.
@@ -115,9 +119,9 @@ class MinHash:
 
 class MultiHash(MinHash):
     def __init__(self):
-        super().__init__()
+        super().__init__(self)
 
-    def multi_hash(self, texts):
+    def multi_hash(self):
         """ Generates a texts minhash signature using multi-hash method.
 
         Uses i random hashes for j permutations selecting the minimum hash value
@@ -125,18 +129,14 @@ class MultiHash(MinHash):
 
         Slower but more stable than bottom-k hash method.
 
-        Args:
-            texts(list, np.array): Iterable containing text content of each document.
-
         Returns:
             list: List of text signatures generated using bottom-k neighbours method.
 
         """
-        shingles = self._k_shingles(texts)
         hash_seeds = np.random.randint(low=1, high=100000000, size=self.permutations)
 
         signatures = []
-        for document in shingles:
+        for document in self._shingles:
             signature = []
             for seed in np.nditer(hash_seeds):
                 min_value = None
@@ -158,9 +158,9 @@ class MultiHash(MinHash):
 
 class BottomK(MinHash):
     def __init__(self):
-        super().__init__()
+        super().__init__(self)
 
-    def k_smallest_hash(self, texts):
+    def k_smallest_hash(self):
         """ Generates a texts minhash signature using k smallest neighbours method.
 
         Uses a single random hash to simulate a shuffle of each text's shingles.
@@ -168,17 +168,12 @@ class BottomK(MinHash):
 
         Faster but less stable than multi hash method.
 
-        Args:
-            texts (list, np.array): Iterable containing text content of each document.
-
         Returns:
             list: List of text signatures generated using k smallest neighbours method.
 
         """
-        shingles = self._k_shingles(texts)
-
         signatures = []
-        for document in shingles:
+        for document in self._shingles:
             signature = []
             # Uses a heap queue to make finding the n smallest values more efficient.
             heapq.heapify(signature)
