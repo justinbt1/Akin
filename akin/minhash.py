@@ -64,7 +64,7 @@ class MinHash:
 
         if method not in [
             'multi_hash',
-            'k_smallest_values'
+            'bottom_k'
         ]:
             raise ValueError(
                 'Only "multi_hash" and "bottom_k" hash methods are supported.'
@@ -213,7 +213,7 @@ class MinHash:
             if self.method == 'multi_hash':
                 signature = self._multi_hash(document)
                 signatures.append(signature)
-            elif self.method == 'k_smallest_values':
+            elif self.method == 'bottom_k':
                 signature = self._k_smallest_hash(document)
                 signatures.append(signature)
 
