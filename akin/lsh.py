@@ -1,6 +1,7 @@
 from collections import defaultdict
-import numpy as np
 from copy import copy
+import numpy as np
+import mmh3
 
 
 class LSH:
@@ -12,7 +13,7 @@ class LSH:
 
     """
 
-    def __init__(self, minhash=None, labels=None, no_of_bands=None):
+    def __init__(self, minhash=None, labels=None, no_of_bands=None, seed=1):
         """ Initialize the LSH object.
 
         Args:
@@ -23,6 +24,7 @@ class LSH:
         """
         # Create default variables
         self.no_of_bands = no_of_bands
+        self.seed = seed
         self._buckets = defaultdict(list)
         self._i_bucket = defaultdict(list)
         self.permutations = None
@@ -56,7 +58,7 @@ class LSH:
                 np.array(signature), self.no_of_bands
             )
             for band in bands:
-                bucket_id = hash(tuple(band))
+                bucket_id = mmh3.hash64(tuple(band), self.seed)[0]
                 self._buckets[bucket_id].append(label)
                 self._i_bucket[label].append(bucket_id)
 
@@ -110,7 +112,7 @@ class LSH:
 
         """
         if self._i_bucket:
-            # Check if texts already exist in model.
+            # Check if texts already exist in index.
             if set(
                     self._i_bucket.keys()
             ).intersection(
