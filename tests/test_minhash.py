@@ -1,5 +1,5 @@
 import pytest
-from akin import MinHash
+from akin import minhash
 import numpy as np
 
 seed = 3
@@ -19,26 +19,24 @@ content = [
 
 
 def test_minhash_defaults():
-    minhash = MinHash(content)
-    assert type(minhash.signatures) is np.ndarray
-    assert minhash.signatures.shape == (9, 100)
-    assert minhash.n_gram == 9
-    assert minhash.n_gram_type == 'char'
-    assert minhash.permutations == 100
-    assert minhash.hash_bits == 64
-    assert minhash.method == 'multi_hash'
-    assert minhash._hash_seeds.shape[0] == 100
+    multi_hash = minhash.MultiHash(content)
+    assert type(multi_hash.signatures) is np.ndarray
+    assert multi_hash.signatures.shape == (9, 100)
+    assert multi_hash.n_gram == 9
+    assert multi_hash.n_gram_type == 'char'
+    assert multi_hash.permutations == 100
+    assert multi_hash.hash_bits == 64
+    assert multi_hash.hash_seeds.shape[0] == 100
 
 
 def multi_hash_tests(first_hash, second_hash, hash_size):
-    minhash = MinHash(
+    multi_hash = minhash.MultiHash(
         content, hash_bits=hash_size, seed=seed
     )
-    assert minhash.seed == 3
-    assert minhash.method == 'multi_hash'
-    assert type(minhash.signatures) is np.ndarray
-    assert minhash.signatures.shape == (9, 100)
-    signature = minhash.signatures
+    assert multi_hash.seed == 3
+    assert type(multi_hash.signatures) is np.ndarray
+    assert multi_hash.signatures.shape == (9, 100)
+    signature = multi_hash.signatures
     assert signature[0][0] == first_hash
     assert signature[-1][-1] == second_hash
 
@@ -68,26 +66,26 @@ def test_multi_minhash_128():
 
 
 def k_smallest_hash_tests(first_hash, second_hash, hash_size):
-    minhash = MinHash(
+    bottom_k_hash = minhash.BottomK(
         content,
         permutations=53,
         hash_bits=hash_size,
-        method='bottom_k',
         seed=seed
     )
-    assert minhash._hash_seeds == 83957611
-    assert minhash.method == 'bottom_k'
-    assert type(minhash.signatures) is np.ndarray
-    assert minhash.signatures.shape == (9, 53)
-    signature = minhash.signatures
+
+    assert bottom_k_hash.seed == seed
+    assert type(bottom_k_hash.signatures) is np.ndarray
+    assert bottom_k_hash.signatures.shape == (9, 53)
+
+    signature = bottom_k_hash.signatures
     assert signature[0][0] == first_hash
     assert signature[-1][-1] == second_hash
+
     with pytest.raises(ValueError):
-        MinHash(
+        minhash.BottomK(
             content,
             permutations=200,
             hash_bits=hash_size,
-            method='bottom_k',
             seed=seed
         )
 
@@ -117,10 +115,12 @@ def test_k_minhash_128():
 
 
 def test_terms_minhash():
-    minhash = MinHash(content, n_gram_type='term', seed=seed)
-    assert minhash.n_gram_type == 'term'
-    assert type(minhash.signatures) is np.ndarray
-    signature = minhash.signatures
+    multi_hash = minhash.MultiHash(content, n_gram_type='term', seed=seed)
+
+    assert multi_hash.n_gram_type == 'term'
+    assert type(multi_hash.signatures) is np.ndarray
+
+    signature = multi_hash.signatures
     assert signature.shape == (9, 100)
     assert signature[0][0] == -8115786556000760185
     assert np.array(signature[0][0]).dtype == 'int64'
@@ -128,17 +128,15 @@ def test_terms_minhash():
 
 
 def test_string_input_minhash():
-    minhash = MinHash(content[0])
-    assert type(minhash.signatures) is np.ndarray
-    assert minhash.signatures.shape == (1, 100)
+    multi_hash = minhash.MultiHash(content[0])
+    assert type(multi_hash.signatures) is np.ndarray
+    assert multi_hash.signatures.shape == (1, 100)
 
 
 def test_minhash_errors():
     with pytest.raises(ValueError):
-        MinHash(content, n_gram_type='words')
+        minhash.MinHash(content, n_gram_type='words')
     with pytest.raises(ValueError):
-        MinHash(content, hash_bits=65)
-    with pytest.raises(ValueError):
-        MinHash(content, method='universal')
-    with pytest.raises(ValueError):
-        MinHash(content, n_gram=63)
+        minhash.MinHash(content, hash_bits=65)
+    # with pytest.raises(ValueError):
+    #     minhash.BottomK(content, n_gram=630)

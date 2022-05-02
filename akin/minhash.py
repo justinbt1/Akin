@@ -4,7 +4,7 @@ import mmh3
 
 
 class MinHash:
-    """ MinHash.
+    """ MinHash base class.
 
     Attributes:
         n_gram (int): Number of characters used in each shingle.
@@ -135,9 +135,9 @@ class MultiHash(MinHash):
             seed
         )
         self.hash_seeds = np.random.randint(low=1, high=100000000, size=self.permutations)
-        self.signatures = self.multi_hash()
+        self.signatures = self._multi_hash()
 
-    def multi_hash(self):
+    def _multi_hash(self):
         """ Generates a texts minhash signature using multi-hash method.
 
         Uses i random hashes for j permutations selecting the minimum hash value
@@ -188,9 +188,9 @@ class BottomK(MinHash):
             hash_bits,
             seed
         )
-        self.signatures = self.k_smallest_hash()
+        self.signatures = self._k_smallest_hash()
 
-    def k_smallest_hash(self):
+    def _k_smallest_hash(self):
         """ Generates a texts minhash signature using k smallest neighbours method.
 
         Uses a single random hash to simulate a shuffle of each text's shingles.
@@ -205,7 +205,7 @@ class BottomK(MinHash):
         signatures = []
         for document in self._shingles:
             signature = []
-            # Uses a heap queue to make finding the n smallest values more efficient.
+            # Uses a heap queue to make finding n smallest values more efficient.
             heapq.heapify(signature)
 
             if len(document) <= self.permutations:
