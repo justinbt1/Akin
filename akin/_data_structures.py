@@ -25,4 +25,3 @@ class BiDirectionalArray(DictionaryArray):
     def __init__(self, n_arrays):
         super(BiDirectionalArray, self).__init__(n_arrays)
         self._hash_arrays = [BiDirectionalDict()] * n_arrays
-
