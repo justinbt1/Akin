@@ -1,3 +1,5 @@
+from collections.abc import MutableMapping
+
 
 class DictionaryArray:
     def __init__(self, n_arrays):
@@ -16,12 +18,25 @@ class DictionaryArray:
         pass
 
 
-class BiDirectionalDict:
-    def __init__(self):
+class BiDirectionalDict(MutableMapping):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.inverse = {}
+
+    def __getitem__(self, item):
         pass
 
+    def __setitem__(self, key, value):
+        pass
 
-class BiDirectionalArray(DictionaryArray):
-    def __init__(self, n_arrays):
-        super(BiDirectionalArray, self).__init__(n_arrays)
-        self._hash_arrays = [BiDirectionalDict()] * n_arrays
+    def __delitem__(self, key):
+        pass
+
+    def __len__(self):
+        pass
+
+    def __iter__(self):
+        pass
+
+    def __repr__(self):
+        pass
