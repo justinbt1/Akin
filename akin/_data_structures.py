@@ -20,8 +20,8 @@ class DictionaryArray:
 
 class BiDirectionalDict(MutableMapping):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.inverse = {}
+        self.store = dict()
+        self.inverse_store = dict()
 
     def __getitem__(self, item):
         pass
