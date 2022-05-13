@@ -24,10 +24,18 @@ class BiDirectionalDict(MutableMapping):
         self.inverse_store = dict()
 
     def __getitem__(self, item):
-        pass
+        return self.store.get(item)
 
-    def __setitem__(self, key, value):
-        pass
+    def __setitem__(self, key, value=None):
+        if value is None:
+            value = []
+        self.store[key] = value
+
+        for i in value:
+            if self.inverse_store[value]:
+                self.inverse_store[value].append(key)
+            else:
+                self.inverse_store[value] = [key]
 
     def __delitem__(self, key):
         pass
