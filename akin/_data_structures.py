@@ -5,7 +5,7 @@ class DictionaryArray:
     def __init__(self, n_arrays):
         if n_arrays < 1:
             raise ValueError('Number of arrays must be an integer of 1 or greater')
-
+        self.n_arrays = n_arrays
         self._hash_arrays = [{}] * n_arrays
 
     def update(self, array, key, value=None):
