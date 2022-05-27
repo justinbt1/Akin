@@ -1,39 +1,95 @@
 import pytest
-from akin import _data_structures
+from akin import DictionaryArray
 
 
 def test_dictionary_array():
-    dictionary_array = _data_structures.DictionaryArray(10)
+    dictionary_array = DictionaryArray(10)
     assert dictionary_array.n_arrays == 10
     assert len(dictionary_array._hash_arrays) == 10
 
     with pytest.raises(ValueError):
-        _data_structures.DictionaryArray(0)
+        DictionaryArray(0)
 
     assert type(dictionary_array._hash_arrays) == list
     assert type(dictionary_array._hash_arrays[0]) == dict
+    assert type(dictionary_array._hash_arrays[-1]) == dict
+
+
+def test_update():
+    dictionary_array = DictionaryArray(5)
 
     dictionary_array.update(3, 'test_key', 'test_value')
-    assert dictionary_array._hash_arrays[3] == {'test_key': ['test_value']}
+    assert dictionary_array._hash_arrays[3] == {'test_key': {'test_value'}}
 
-    dictionary_array.update(3, 2, 2)
-    assert dictionary_array._hash_arrays[3] == {'test_key': ['test_value'], 2: [2]}
+    dictionary_array.update(3, 'test_key', 'test_value')
+    assert dictionary_array._hash_arrays[3] == {'test_key': {'test_value'}}
 
-    dictionary_array.update(3, 2, 3)
-    assert dictionary_array._hash_arrays[3] == {'test_key': ['test_value'], 2: [2, 3]}
+    dictionary_array.update(3, 'test_key', 'test_value_two')
+    assert dictionary_array._hash_arrays[3] == {'test_key': {'test_value', 'test_value_two'}}
 
-    dictionary_array.update(3, 4, 3)
-    dictionary_array.update(3, 4, 4)
-    dictionary_array.update(3, 4, 6)
-    dictionary_array.update(3, 5, 4)
-    dictionary_array.update(3, 5, 6)
-    assert dictionary_array._hash_arrays[3] == {'test_key': ['test_value'], 2: [2, 3], 4: [3, 4, 6], 5: [4, 6]}
+    dictionary_array.update(3, 'test_key_two', 'test_value_one')
+    assert dictionary_array._hash_arrays[3] == {
+        'test_key': {'test_value', 'test_value_two'},
+        'test_key_two': {'test_value_one'}
+    }
+
+    dictionary_array.update(4, 111, 100)
+    assert dictionary_array._hash_arrays[4] == {111: {100}}
+
+    assert dictionary_array._hash_arrays == [
+        {},
+        {},
+        {},
+        {
+            'test_key': {'test_value', 'test_value_two'},
+            'test_key_two': {'test_value_one'}
+        },
+        {111: {100}}
+    ]
+
+
+def test_remove_key():
+    dictionary_array = DictionaryArray(5)
+
+    dictionary_array._hash_arrays = [
+        {},
+        {},
+        {},
+        {
+            'test_key': {'test_value', 'test_value_two'},
+            'test_key_two': {'test_value_one'}
+        },
+        {111: {100}}
+    ]
+
+    dictionary_array.remove_key(4, 111)
+    assert dictionary_array._hash_arrays[4] == {}
 
     dictionary_array.remove_key(3, 'test_key')
-    assert dictionary_array._hash_arrays[3] == {2: [2, 3], 4: [3, 4, 6], 5: [4, 6]}
+    assert dictionary_array._hash_arrays[3] == {'test_key_two': {'test_value_one'}}
 
-    dictionary_array.update(3, 2, 2)
+    assert dictionary_array._hash_arrays == [
+        {},
+        {},
+        {},
+        {'test_key_two': {'test_value_one'}},
+        {}
+    ]
 
-    dictionary_array.remove_value([2], 2)
-    assert dictionary_array._hash_arrays[3] == {2: [3], 4: [3, 4, 6], 5: [4, 6]}
 
+def test_remove_value():
+    dictionary_array = DictionaryArray(5)
+
+    dictionary_array._hash_arrays = [
+        {'test_key_four': {'remove'}},
+        {
+            'test_key_three': {'test_value', 'test_value_two'},
+            'test_key_four': {'remove'}
+        },
+        {'test_key_five': {'remove'}},
+        {
+            'test_key': {'test_value', 'remove'},
+            'test_key_two': {'test_value_one'}
+        },
+        {111: {100}}
+    ]

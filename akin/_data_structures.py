@@ -1,28 +1,63 @@
 
-
 class DictionaryArray:
     def __init__(self, n_arrays):
+        """ Wrapper for easy manipulation of a list of dictionary arrays.
+
+        Args:
+            n_arrays(int): Number of dictionary arrays to include.
+
+        """
         if n_arrays < 1:
             raise ValueError('Number of arrays must be an integer of 1 or greater')
 
         self.n_arrays = n_arrays
-        self._hash_arrays = [{}] * n_arrays
+        self._hash_arrays = [dict() for i in range(n_arrays)]
 
-    def update(self, array, key, value=None):
+    def update(self, array_id, key, value=None):
+        """
+
+        Args:
+            array_id(int):
+            key(int):
+            value(int):
+
+        Returns:
+
+        """
         if value:
-            if self._hash_arrays[array].get(key):
-                self._hash_arrays[array][key].append(value)
+            bucket = self._hash_arrays[array_id].get(key)
+            if bucket:
+                bucket.add(value)
             else:
-                self._hash_arrays[array][key] = [value]
+                self._hash_arrays[array_id][key] = {value}
         else:
-            if not self._hash_arrays[array].get(key):
-                self._hash_arrays[array][key] = []
+            if not self._hash_arrays[array_id].get(key):
+                self._hash_arrays[array_id][key] = set()
 
-    def remove_key(self, array, key):
-        del self._hash_arrays[array][key]
+    def remove_key(self, array_id, key):
+        """
 
-    def remove_value(self, keys, value):
-        for i, key in enumerate(keys):
-            self._hash_arrays[i][key] = [v for v in self._hash_arrays[i][key] if v != value]
-            if not self._hash_arrays[i][key]:
-                del self._hash_arrays[i][key]
+        Args:
+            array_id(int):
+            key(int):
+
+        Returns:
+
+        """
+        del self._hash_arrays[array_id][key]
+
+    def remove_value(self, array_id, key, value):
+        """
+
+        Args:
+            array_id(int):
+            key(int):
+            value(int):
+
+        Returns:
+
+        """
+        bucket = self._hash_arrays[array_id][key]
+        bucket.remove(value)
+        if not bucket:
+            del bucket
