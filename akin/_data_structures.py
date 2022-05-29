@@ -18,8 +18,8 @@ class DictionaryArray:
 
         Args:
             array_id(int):
-            key(int):
-            value(int):
+            key:
+            value:
 
         Returns:
 
@@ -34,12 +34,15 @@ class DictionaryArray:
             if not self._hash_arrays[array_id].get(key):
                 self._hash_arrays[array_id][key] = set()
 
+    def get(self, array_id, key):
+        return self._hash_arrays[array_id][key]
+
     def remove_key(self, array_id, key):
         """
 
         Args:
             array_id(int):
-            key(int):
+            key:
 
         Returns:
 
@@ -51,8 +54,8 @@ class DictionaryArray:
 
         Args:
             array_id(int):
-            key(int):
-            value(int):
+            key:
+            value:
 
         Returns:
 
