@@ -1,4 +1,5 @@
 import pytest
+import numpy as np
 from akin import DictionaryArray
 
 
@@ -33,8 +34,9 @@ def test_update():
         'test_key_two': {'test_value_one'}
     }
 
-    dictionary_array.update(4, 111, 100)
-    assert dictionary_array._hash_arrays[4] == {111: {100}}
+    print(tuple(a for a in np.array([100, 200])))
+    dictionary_array.update(4, 111, tuple(a for a in np.array([100, 200])))
+    assert dictionary_array._hash_arrays[4] == {111: {(100, 200)}}
 
     assert dictionary_array._hash_arrays == [
         {},
@@ -44,7 +46,7 @@ def test_update():
             'test_key': {'test_value', 'test_value_two'},
             'test_key_two': {'test_value_one'}
         },
-        {111: {100}}
+        {111: {(100, 200)}}
     ]
 
 
