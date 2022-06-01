@@ -50,6 +50,25 @@ def test_update():
     ]
 
 
+def test_get_key():
+    dictionary_array = DictionaryArray(5)
+
+    dictionary_array._hash_arrays = [
+        {},
+        {},
+        {},
+        {
+            'test_key': {'test_value', 'test_value_two'},
+            'test_key_two': {'test_value_one'}
+        },
+        {111: {100}}
+    ]
+
+    assert dictionary_array.get(3, 'test_key') == {'test_value', 'test_value_two'}
+    assert dictionary_array.get(3, 'test_key_two') == {'test_value_one'}
+    assert dictionary_array.get(4, 111) == {100}
+
+
 def test_remove_key():
     dictionary_array = DictionaryArray(5)
 
