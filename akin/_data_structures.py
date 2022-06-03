@@ -62,5 +62,14 @@ class DictionaryArray:
         """
         bucket = self._hash_arrays[array_id][key]
         bucket.remove(value)
+
         if not bucket:
-            del bucket
+            del self._hash_arrays[array_id][key]
+
+    def values(self):
+        values = set()
+        for array in self._hash_arrays:
+            for value_set in array.values():
+                values.update(value_set)
+
+        return values

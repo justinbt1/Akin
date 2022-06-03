@@ -1,6 +1,5 @@
 import pytest
 from akin import minhash
-import numpy as np
 
 seed = 3
 content = [
@@ -31,8 +30,9 @@ def multi_hash_tests(first_hash, second_hash, hash_size):
     multi_hash = minhash.MultiHash(hash_bits=hash_size, seed=seed)
     assert multi_hash.seed == 3
     signatures = multi_hash.transform(content)
-    assert type(signatures) is np.ndarray
-    assert signatures.shape == (9, 100)
+    assert type(signatures) is tuple
+    assert len(signatures) == 9
+    assert len(signatures[0]) == 100
     assert signatures[0][0] == first_hash
     assert signatures[-1][-1] == second_hash
 
@@ -72,8 +72,9 @@ def k_smallest_hash_tests(first_hash, second_hash, hash_size):
 
     signatures = bottom_k_hash.transform(content)
 
-    assert type(signatures) is np.ndarray
-    assert signatures.shape == (9, 53)
+    assert type(signatures) is tuple
+    assert len(signatures) == 9
+    assert len(signatures[0]) == 53
 
     assert signatures[0][0] == first_hash
     assert signatures[-1][-1] == second_hash
@@ -108,18 +109,20 @@ def test_terms_minhash():
     signatures = multi_hash.transform(content)
 
     assert multi_hash.n_gram_type == 'term'
-    assert type(signatures) is np.ndarray
-    assert signatures.shape == (9, 100)
+    assert type(signatures) is tuple
+    assert len(signatures) == 9
+    assert len(signatures[0]) == 100
+    assert type(signatures[0][0]) is int
     assert signatures[0][0] == -8115786556000760185
-    assert np.array(signatures[0][0]).dtype == 'int64'
     assert signatures[-1][-1] == -579511180950999701
 
 
 def test_string_input_minhash():
     multi_hash = minhash.MultiHash()
     signatures = multi_hash.transform(content[0])
-    assert type(signatures) is np.ndarray
-    assert signatures.shape == (1, 100)
+    assert type(signatures) is tuple
+    assert len(signatures) == 1
+    assert len(signatures[0]) == 100
 
 
 def test_minhash_errors():

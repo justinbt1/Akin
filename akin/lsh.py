@@ -1,6 +1,4 @@
-from collections import Counter
-from copy import copy
-import numpy as np
+import math
 import mmh3
 
 from akin import DictionaryArray
@@ -15,7 +13,7 @@ class LSH:
 
     """
 
-    def __init__(self, no_of_bands=None, seed=1):
+    def __init__(self, no_of_bands, permutations=None, seed=1):
         """ Initialize the LSH object.
 
         Args:
@@ -25,26 +23,59 @@ class LSH:
         self.no_of_bands = no_of_bands
         self.seed = seed
         self._buckets = DictionaryArray(no_of_bands)
-        self.permutations = None
+        self.permutations = permutations
 
-    def _lsh(self, signatures):
+    def _lsh(self, signature):
         """ Break signatures into bands and hash components to buckets.
 
         Args:
-            signatures (np.array): MinHash signature Matrix.
+            signature (np.array): MinHash signature Matrix.
 
         """
-        for signature in signatures:
-            hashable_signature = tuple(hash_value for hash_value in signature)
+        band_size = math.ceil(len(signature) / self.no_of_bands)
+        for i in range(0, self.permutations, band_size):
+            band = str(signature[i:i + band_size])
+            bucket_id = mmh3.hash64(band, self.seed)[0]
+            yield bucket_id
 
-            bands = np.hsplit(
-                np.array(signature),
-                self.no_of_bands
-            )
+    @staticmethod
+    def _candidate_duplicates(query_signature, candidates, sensitivity=1, jaccard_threshold=None):
+        """ Identify candidate duplicates and check Jaccard Similarity.
 
-            for band_id, band in enumerate(bands):
-                bucket_id = mmh3.hash64(tuple(band), self.seed)[0]
-                yield band_id, bucket_id, hashable_signature
+        Args:
+            query_signature (tuple): Query minhash signature.
+            candidates (dict): List of bucket ids.
+            sensitivity (int): Number of identical buckets two ids must occur
+                in to be considered a near duplicate pair.
+            jaccard_threshold (float): Minimum Jaccard Similarity for documents to be
+                counted as near duplicates.
+
+        Returns:
+            List: Near duplicate document ids.
+
+        """
+        # Apply Jaccard threshold and unzip pairs.
+        if jaccard_threshold or sensitivity != 1:
+            matches = []
+            for candidate, occurrence_count in candidates.items():
+                if sensitivity != 1:
+                    if occurrence_count < sensitivity:
+                        continue
+
+                if jaccard_threshold:
+                    intersection = len(set(query_signature) & set(candidate))
+                    union = len(set(query_signature) | set(candidate))
+                    jaccard_ratio = intersection / union
+
+                    if jaccard_ratio < jaccard_threshold:
+                        continue
+
+                matches.append(candidate)
+
+            return matches
+
+        else:
+            return list(candidates)
 
     def update(self, minhash_signatures):
         """ Updates LSH object with new MinHash matrix and labels.
@@ -55,18 +86,16 @@ class LSH:
 
         """
         if not self.permutations:
-            self.permutations = minhash_signatures.shape[1]
+            self.permutations = minhash_signatures.shape[0]
         else:
             if minhash_signatures.shape[1] != self.permutations:
                 raise IndexError(
                     f'Number of permutations in minhash must be {self.permutations} to match LSH model.'
                 )
 
-        if not self.no_of_bands:
-            self.no_of_bands = minhash_signatures[0].shape[1] // 2
-
-        band_id, bucket_id, hashable_signature = self._lsh(minhash_signatures)
-        self._buckets.update(band_id, key=bucket_id, value=hashable_signature)
+        for signature in minhash_signatures:
+            for band_id, bucket_id in enumerate(self._lsh(minhash_signatures)):
+                self._buckets.update(band_id, key=bucket_id, value=signature)
 
     def remove(self, minhash_signatures):
         """ Remove label and associated text signature from model.
@@ -75,43 +104,9 @@ class LSH:
             minhash_signatures (str, int, float): Label for text to be removed from model.
 
         """
-        band_id, bucket_id, hashable_signature = self._lsh(minhash_signatures)
-        self._buckets.remove_value(band_id, key=bucket_id, value=hashable_signature)
-
-    def _candidate_duplicates(self, signature, candidates, sensitivity, jaccard_threshold):
-        """ Identify candidate duplicates and check Jaccard Similarity.
-
-        Args:
-            candidates (list): List of bucket ids.
-            sensitivity (int): Number of identical buckets two ids must occur
-                in to be considered a near duplicate pair.
-            jaccard (float): Minimum Jaccard Similarity for documents to be
-                counted as near duplicates.
-
-        Returns:
-            List: Near duplicate document ids.
-
-        """
-        """
-        # Apply sensitivity threshold.
-        if sensitivity > 1:
-            for key in list(candidates):
-                if candidates[key] < sensitivity:
-                    del candidates[key]
-        """
-
-        # Apply Jaccard threshold and unzip pairs.
-        matches = []
-
-        if jaccard_threshold:
-            for candidate in candidates:
-                intersection = len(set(signature) & set(candidate))
-                union = len(set(signature) | set(candidate))
-                jaccard_ratio = intersection / union
-                if jaccard_ratio < jaccard_threshold:
-                    matches.append(candidate)
-
-        return matches
+        for signature in minhash_signatures:
+            for band_id, bucket_id in enumerate(self._lsh(minhash_signatures)):
+                self._buckets.remove_value(band_id, key=bucket_id, value=signature)
 
     def query(self, minhash_signature, min_jaccard=None, sensitivity=1):
         """ Returns near duplicates from model.
@@ -135,29 +130,33 @@ class LSH:
         if sensitivity > self.no_of_bands:
             raise ValueError('Sensitivity must be <= no of bands.')
 
-        bands = np.hsplit(
-            np.array(minhash_signature),
-            self.no_of_bands
-        )
-
-        hashable_signature = tuple(hash_value for hash_value in minhash_signature)
-
-        candidates_set = set()
-        for band_id, band in enumerate(bands):
-            bucket_id = mmh3.hash64(tuple(band), self.seed)[0]
+        candidates_dict = {}
+        for band_id, bucket_id in enumerate(self._lsh(minhash_signature)):
             candidates = self._buckets.get(band_id, bucket_id)
-            candidates_set.update(candidates)
+            for candidate in candidates:
+                existing_key = candidates_dict.get(candidate)
 
-        candidates_set.remove(hashable_signature)
+                if existing_key:
+                    existing_key += 1
+                else:
+                    candidates_dict[candidate] = 1
 
-        return self._candidate_duplicates(
-            hashable_signature,
-            candidates_set,
+        del candidates_dict[minhash_signature]
+
+        near_duplicates = self._candidate_duplicates(
+            minhash_signature,
+            candidates_dict,
             sensitivity,
             min_jaccard
         )
 
-    def adjacency_list(self, min_jaccard=None, sensitivity=1):
+        return near_duplicates
+
+    def get_minhashes(self):
+        values = self._buckets.values()
+        return values
+
+    def adjacency_list(self, minhash_signatures=None, min_jaccard=None, sensitivity=1):
         """ Returns adjacency list.
 
         Iterates over texts, pairing each text with a list of labels whose relationships with
@@ -175,6 +174,9 @@ class LSH:
             Dict: Adjacency list.
 
         """
+        if not minhash_signatures:
+            minhash_signatures = self._buckets.values()
+
         if sensitivity > self.no_of_bands:
             raise ValueError(
                 'Sensitivity must be <= no of bands.'
@@ -182,11 +184,7 @@ class LSH:
 
         adjacency_list = {}
 
-        for label in self._i_bucket.keys():
-            buckets = self._i_bucket.get(label)
-            candidates = self._candidate_duplicates(
-                buckets, label, sensitivity, min_jaccard
-            )
-            adjacency_list[label] = candidates
+        for signature in minhash_signatures:
+            adjacency_list[signature] = self.query(signature, min_jaccard, sensitivity)
 
         return adjacency_list
