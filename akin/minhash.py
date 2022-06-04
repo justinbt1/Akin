@@ -136,9 +136,9 @@ class MultiHash(MinHash):
 
                 signature.append(min_value)
 
-            signatures.append(signature)
+            signatures.append(tuple(signature))
 
-        return tuple(signatures)
+        return signatures
 
     def transform(self, text_corpus):
         """ Transform text to Minhash arrays using multi-hash method.
@@ -186,9 +186,10 @@ class BottomK(MinHash):
                 hashed_shingle = self._hashing(shingle, self.seed)
                 heapq.heappush(signature, hashed_shingle)
 
-            signatures.append(heapq.nsmallest(self.permutations, signature))
+            k_smallest_hashes = heapq.nsmallest(self.permutations, signature)
+            signatures.append(tuple(k_smallest_hashes))
 
-        return tuple(signatures)
+        return signatures
 
     def transform(self, text_corpus):
         """ Transform text to Minhash arrays using k-smallest hash method.

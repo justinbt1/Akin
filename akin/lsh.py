@@ -32,11 +32,14 @@ class LSH:
             signature (np.array): MinHash signature Matrix.
 
         """
+        band_hashes = []
         band_size = math.ceil(len(signature) / self.no_of_bands)
         for i in range(0, self.permutations, band_size):
             band = str(signature[i:i + band_size])
             bucket_id = mmh3.hash64(band, self.seed)[0]
-            yield bucket_id
+            band_hashes.append(bucket_id)
+
+        return band_hashes
 
     @staticmethod
     def _candidate_duplicates(query_signature, candidates, sensitivity=1, jaccard_threshold=None):
@@ -86,15 +89,15 @@ class LSH:
 
         """
         if not self.permutations:
-            self.permutations = minhash_signatures.shape[0]
+            self.permutations = len(minhash_signatures[0])
         else:
-            if minhash_signatures.shape[1] != self.permutations:
+            if len(minhash_signatures[0]) != self.permutations:
                 raise IndexError(
                     f'Number of permutations in minhash must be {self.permutations} to match LSH model.'
                 )
 
         for signature in minhash_signatures:
-            for band_id, bucket_id in enumerate(self._lsh(minhash_signatures)):
+            for band_id, bucket_id in enumerate(self._lsh(signature)):
                 self._buckets.update(band_id, key=bucket_id, value=signature)
 
     def remove(self, minhash_signatures):
@@ -105,7 +108,7 @@ class LSH:
 
         """
         for signature in minhash_signatures:
-            for band_id, bucket_id in enumerate(self._lsh(minhash_signatures)):
+            for band_id, bucket_id in enumerate(self._lsh(signature)):
                 self._buckets.remove_value(band_id, key=bucket_id, value=signature)
 
     def query(self, minhash_signature, min_jaccard=None, sensitivity=1):
@@ -165,6 +168,7 @@ class LSH:
         Can be used to create an undirected graph for texts in the LSH object.
 
         Args:
+            minhash_signatures (): x
             min_jaccard (float): Minimum Jaccard Similarity for texts to be returned as near
                 duplicates.
             sensitivity (int): Number of unique buckets two ids must co-occur in to be
