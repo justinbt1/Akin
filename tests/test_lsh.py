@@ -15,6 +15,7 @@ content = [
     'Theoretical models indicate that if Jupiter had much more mass than it does at present, it would shrink.',
     'This process causes Jupiter to shrink by about 2 cm each year.',
     'Jupiter is mostly composed of hydrogen with a quarter of its mass being helium',
+    'The Great Red Spot is large enough to accommodate Earth within its boundaries.',
     'The Great Red Spot is large enough to accommodate Earth within its boundaries.'
 ]
 
@@ -135,18 +136,29 @@ def test_remove():
     lsh = LSH(no_of_bands=10, permutations=20)
     lsh.update(signatures)
     lsh.remove([signatures[0]])
-    lsh.remove(signatures[1:])
-    print(lsh._buckets._hash_arrays)
-    assert False is True
 
+    for hash_array in lsh._buckets._hash_arrays:
+        assert signatures[0] not in hash_array.values()
+
+    lsh.remove(signatures[1:-1])
+
+    with pytest.raises(KeyError):
+        lsh.remove([signatures[-1]])
 
 
 def test_query():
-    pass
+    lsh = LSH(no_of_bands=10, permutations=20)
+
+    with pytest.raises(ValueError):
+        lsh.query(signatures[-1], sensitivity=21)
 
 
 def test_minhashes():
-    pass
+    lsh = LSH(no_of_bands=10, permutations=20)
+    lsh.update(signatures)
+
+    retrieved_hashes = lsh.get_minhashes()
+    assert set(signatures) == retrieved_hashes
 
 
 def test_adjacency_list():
