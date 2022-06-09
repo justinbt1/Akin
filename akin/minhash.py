@@ -53,7 +53,7 @@ class MinHash:
         of n_gram size.
 
         Args:
-            texts (list, np.array): list, array or Pandas series of input texts.
+            texts (list): list, array or Pandas series of input texts.
 
         Yields:
             List: Shingle list generated for each input text.
@@ -104,6 +104,12 @@ class MinHash:
 
 
 class MultiHash(MinHash):
+    """ Generates minhash signatures by concatenating the min value of j permutation hashes.
+
+    Attributes:
+        hash_seeds (np.array): randomly generated seeds for each of j permutation hashes.
+
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.hash_seeds = np.random.randint(low=1, high=100000000, size=self.permutations)
@@ -117,7 +123,7 @@ class MultiHash(MinHash):
         Slower but more stable than bottom-k hash method.
 
         Returns:
-            list: List of text signatures generated using bottom-k neighbours method.
+            list: List of text signatures generated using multi-hash method.
 
         """
         signatures = []
@@ -144,11 +150,10 @@ class MultiHash(MinHash):
         """ Transform text to Minhash arrays using multi-hash method.
 
         Args:
-            text_corpus(list, np.array): 2D Iterable containing text content of each document.
+            text_corpus(list): 2D Iterable containing text content of each document.
 
         Returns:
-            np.array: Matrix of minhash signatures, m represents each texts
-            minhash signature with n representing each permutation's minimum hash value.
+            list: List of minhash tuple signatures.
 
         """
         shingles = self._k_shingles(text_corpus)
@@ -156,6 +161,9 @@ class MultiHash(MinHash):
 
 
 class BottomK(MinHash):
+    """ Generates minhash signatures using k-smallest values of a single permutation hash.
+
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -195,11 +203,10 @@ class BottomK(MinHash):
         """ Transform text to Minhash arrays using k-smallest hash method.
 
         Args:
-            text_corpus(list, np.array): 2D Iterable containing text content of each document.
+            text_corpus(list): 2D Iterable containing text content of each document.
 
         Returns:
-            np.array: Matrix of minhash signatures, m represents each texts
-            minhash signature with n representing each permutation's minimum hash value.
+            list: List of minhash tuple signatures.
 
         """
         shingles = self._k_shingles(text_corpus)

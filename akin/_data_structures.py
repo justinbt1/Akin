@@ -67,6 +67,11 @@ class DictionaryArray:
             del self._hash_arrays[array_id][key]
 
     def values(self):
+        """
+        
+        Returns:
+
+        """
         values = set()
         for array in self._hash_arrays:
             for value_set in array.values():
