@@ -9,6 +9,7 @@ class LSH:
 
     Attributes:
         no_of_bands (int): Number of bands used in model.
+        seed (int): Random seed used for hashing.
         permutations (int): Number of permutations used in MinHash.
 
     """
@@ -18,6 +19,8 @@ class LSH:
 
         Args:
             no_of_bands (int): Number of bands to break minhash signature into.
+            permutations (int): Number of permutations (hashes) in minhash signature.
+            seed (int): Random seed used for hashing.
 
         """
         self.no_of_bands = no_of_bands
@@ -29,7 +32,7 @@ class LSH:
         """ Break signatures into bands and hash components to buckets.
 
         Args:
-            signature (np.array): MinHash signature Matrix.
+            signature (tuple): a minhash signature.
 
         """
         band_hashes = []
@@ -54,7 +57,7 @@ class LSH:
                 counted as near duplicates.
 
         Returns:
-            List: Near duplicate document ids.
+            list: Near duplicate document ids.
 
         """
         # Apply Jaccard threshold and unzip pairs.
@@ -84,8 +87,7 @@ class LSH:
         """ Updates LSH object with new MinHash matrix and labels.
 
         Args:
-            minhash_signatures(np.array): MinHash object containing new minhash signatures to
-                add to LSH object.
+            minhash_signatures (list): new minhash signatures to add to LSH object.
 
         """
         if not self.permutations:
@@ -104,7 +106,7 @@ class LSH:
         """ Remove label and associated text signature from model.
 
         Args:
-            minhash_signatures (str, int, float): Label for text to be removed from model.
+            minhash_signatures (list): minhash signatures to remove from model.
 
         """
         for signature in minhash_signatures:
@@ -120,14 +122,14 @@ class LSH:
         Can be used to create a recommendation model.
 
         Args:
-            minhash_signature (str, int, float): Label of text for which to return near duplicates.
+            minhash_signature (tuple): minhash signature of text for which to return near duplicates.
             min_jaccard (float): Minimum Jaccard Similarity for texts to be returned as
                 near duplicates.
             sensitivity (int): Number of unique buckets two ids must co-occur in to be
                 considered a near duplicate pair.
 
         Returns:
-            List: Candidate duplicates for provided text label.
+            list: Candidate duplicates for provided text label.
 
         """
         if sensitivity > self.no_of_bands:
@@ -156,6 +158,12 @@ class LSH:
         return near_duplicates
 
     def get_minhashes(self):
+        """ Returns set of minhashes contained in LSH model.
+
+        Returns:
+            set: set of all unique minhashes within LSH model.
+
+        """
         values = self._buckets.values()
         return values
 
@@ -168,14 +176,14 @@ class LSH:
         Can be used to create an undirected graph for texts in the LSH object.
 
         Args:
-            minhash_signatures (): x
+            minhash_signatures (list): list of minhash signatures to use as keys.
             min_jaccard (float): Minimum Jaccard Similarity for texts to be returned as near
                 duplicates.
             sensitivity (int): Number of unique buckets two ids must co-occur in to be
                 considered a near duplicate pair.
 
         Returns:
-            Dict: Adjacency list.
+            dict: Adjacency list.
 
         """
         if not minhash_signatures:
