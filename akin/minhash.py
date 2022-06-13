@@ -157,6 +157,7 @@ class MultiHash(MinHash):
 
         """
         shingles = self._k_shingles(text_corpus)
+        
         return self._multi_hash(shingles)
 
 
@@ -210,4 +211,5 @@ class BottomK(MinHash):
 
         """
         shingles = self._k_shingles(text_corpus)
+
         return self._k_smallest_hash(shingles)
