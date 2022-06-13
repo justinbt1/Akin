@@ -157,7 +157,7 @@ class MultiHash(MinHash):
 
         """
         shingles = self._k_shingles(text_corpus)
-        
+
         return self._multi_hash(shingles)
 
 
