@@ -36,7 +36,7 @@ def test_lsh_init_params():
     assert lsh.no_of_bands == 4
     assert lsh.seed == 2
     assert lsh._buckets._hash_arrays == DictionaryArray(4)._hash_arrays
-    assert lsh.permutations is 100
+    assert lsh.permutations == 100
 
 
 def test_lsh_lsh():
@@ -120,6 +120,14 @@ def test_candidate_duplicates():
 
 
 def test_update():
+    with pytest.raises(IndexError):
+        lsh = LSH(no_of_bands=10, permutations=21)
+        lsh.update(signatures)
+
+    with pytest.raises(IndexError):
+        lsh = LSH(no_of_bands=10, permutations=19)
+        lsh.update(signatures)
+
     lsh = LSH(no_of_bands=10, permutations=20)
     lsh.update(signatures)
 
@@ -254,6 +262,9 @@ def test_adjacency_list():
 
     lsh = LSH(no_of_bands=5)
     lsh.update(signatures)
+
+    with pytest.raises(ValueError):
+        lsh.adjacency_list(sensitivity=6)
 
     resulting_adjacency_list = lsh.adjacency_list()
 

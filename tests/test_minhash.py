@@ -106,6 +106,12 @@ def test_k_minhash_128():
     )
 
 
+def test_k_minhash_errors():
+    with pytest.raises(ValueError):
+        bottom_k_hash = minhash.BottomK(permutations=100)
+        bottom_k_hash.transform(content)
+
+
 def test_terms_minhash():
     multi_hash = minhash.MultiHash(n_gram_type='term', seed=seed)
     signatures = multi_hash.transform(content)
@@ -135,3 +141,10 @@ def test_minhash_errors():
 
     with pytest.raises(ValueError):
         minhash.MinHash(hash_bits=65)
+
+    multi_hash = minhash.MultiHash(n_gram=62)
+    multi_hash.transform(content)
+
+    with pytest.raises(ValueError):
+        multi_hash = minhash.MultiHash(n_gram=63)
+        multi_hash.transform(content)
