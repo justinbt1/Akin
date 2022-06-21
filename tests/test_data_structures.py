@@ -53,6 +53,9 @@ def test_update():
     test_array[4][111] = {(100, 200)}
     assert dictionary_array._hash_arrays == test_array
 
+    dictionary_array.update(0, 'empty_key')
+    assert dictionary_array.get(0, 'empty_key') == set()
+
 
 def test_get_key():
     dictionary_array = DictionaryArray(5)
