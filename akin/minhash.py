@@ -56,7 +56,7 @@ class MinHash:
             texts (list): list, array or Pandas series of input texts.
 
         Yields:
-            List: Shingle list generated for each input text.
+            list: Shingle list generated for each input text.
 
         """
         trim_overflow = (self.n_gram - 1) * -1
