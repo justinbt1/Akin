@@ -13,7 +13,7 @@ near duplicate texts at scale or locate different versions of a document.
 ### Installation
 Install from PyPI using pip:
 ```python3 pip install akin```  
-Note for the ARM Apple M1 architecture some dependencies may need to be installed separately in advance.
+Note for the ARM Apple M1 architecture some dependencies may need to be installed separately using conda.
 
 ### API Documentation
 See the [full documentation here](https://github.com/justinbt1/Akin/blob/dev/docs/api_documentation.md) for API 
@@ -21,17 +21,17 @@ and usage guide.
 
 ### Quick Start Example
 ``` python
-from akin import MinHash, LSH
+from akin import MultiHash, LSH
 
 content = [
     'Jupiter is primarily composed of hydrogen with a quarter of its mass being helium',
     'Jupiter moving out of the inner Solar System would have allowed the formation of inner '
     'planets.',
-    'A helium atom has about four times as much mass as a hydrogen atom, so the composition changes '
-    'when described as the proportion of mass contributed by different atoms.',
+    'A helium atom has about four times as much mass as a hydrogen atom, so the composition '
+    'changes when described as the proportion of mass contributed by different atoms.',
     'Jupiter is primarily composed of hydrogen and a quarter of its mass being helium',
-    'A helium atom has about four times as much mass as a hydrogen atom and the composition changes '
-    'when described as a proportion of mass contributed by different atoms.',
+    'A helium atom has about four times as much mass as a hydrogen atom and the composition '
+    'changes when described as a proportion of mass contributed by different atoms.',
     'Theoretical models indicate that if Jupiter had much more mass than it does at present, it '
     'would shrink.',
     'This process causes Jupiter to shrink by about 2 cm each year.',
@@ -39,14 +39,14 @@ content = [
     'The Great Red Spot is large enough to accommodate Earth within its boundaries.'
 ]
 
-# Labels for each text in content.
-content_labels = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 
-# Create MinHash object.
-minhash = MinHash(content, n_gram=9, permutations=100, hash_bits=64, seed=3)
+# Generate MinHash signatures.
+minhash = MultiHash(n_gram=9, permutations=100, hash_bits=64, seed=3)
+signatures  minhash.transform(content)
 
 # Create LSH model.
-lsh = LSH(minhash, content_labels, no_of_bands=50)
+lsh = LSH(no_of_bands=50)
+lsh.update(signatures)
 
 # Query to find near duplicates for text 1.
 print(lsh.query(1, min_jaccard=0.5))
