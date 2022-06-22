@@ -20,7 +20,7 @@ class DictionaryArray:
             raise ValueError('Number of arrays must be an integer of 1 or greater')
 
         self.n_arrays = n_arrays
-        self._hash_arrays = [dict() for i in range(n_arrays)]
+        self._hash_arrays = [dict() for _ in range(n_arrays)]
 
     def update(self, array_id, key, value=None):
         """ Updates specified dictionary with key, value.
