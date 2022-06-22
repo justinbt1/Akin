@@ -45,7 +45,31 @@ class LSH:
         return band_hashes
 
     @staticmethod
-    def _candidate_duplicates(query_signature, candidates, sensitivity=1, jaccard_threshold=None):
+    def _jaccard_similarity(query_signature, candidate):
+        """ Estimate jaccard similarity ratio of signatures.
+
+        Args:
+            query_signature (tuple): Query minhash signature.
+            candidate (dict): Candidate signature.
+
+        Returns:
+            float: Estimated jaccard ratio.
+
+        """
+        intersection = len(set(query_signature) & set(candidate))
+        union = len(set(query_signature) | set(candidate))
+        jaccard_ratio = intersection / union
+
+        return jaccard_ratio
+
+    def _candidate_duplicates(
+            self,
+            query_signature,
+            candidates,
+            sensitivity=1,
+            jaccard_threshold=None,
+            include_similarity=False
+    ):
         """ Identify candidate duplicates and check Jaccard Similarity.
 
         Args:
@@ -55,28 +79,34 @@ class LSH:
                 in to be considered a near duplicate pair.
             jaccard_threshold (float): Minimum Jaccard Similarity for documents to be
                 counted as near duplicates.
+            include_similarity (bool): return similarity alongside estimated near duplicates.
 
         Returns:
             list: Near duplicate document ids.
 
         """
         # Apply Jaccard threshold and unzip pairs.
-        if jaccard_threshold or sensitivity != 1:
+        if jaccard_threshold or sensitivity != 1 or include_similarity:
             matches = []
             for candidate, occurrence_count in candidates.items():
                 if sensitivity != 1:
                     if occurrence_count < sensitivity:
                         continue
 
-                if jaccard_threshold:
-                    intersection = len(set(query_signature) & set(candidate))
-                    union = len(set(query_signature) | set(candidate))
-                    jaccard_ratio = intersection / union
+                if jaccard_threshold or include_similarity:
+                    jaccard_ratio = self._jaccard_similarity(query_signature, candidate)
 
-                    if jaccard_ratio < jaccard_threshold:
-                        continue
+                    if jaccard_threshold:
+                        if jaccard_ratio < jaccard_threshold:
+                            continue
 
-                matches.append(candidate)
+                    if include_similarity:
+                        matches.append((jaccard_ratio, candidate))
+                    else:
+                        matches.append(candidate)
+
+                else:
+                    matches.append(candidate)
 
             return matches
 
@@ -113,7 +143,7 @@ class LSH:
             for band_id, bucket_id in enumerate(self._lsh(signature)):
                 self._buckets.remove_value(band_id, key=bucket_id, value=signature)
 
-    def query(self, minhash_signature, min_jaccard=None, sensitivity=1):
+    def query(self, minhash_signature, min_jaccard=None, sensitivity=1, include_similarity=False):
         """ Returns near duplicates from model.
 
         Takes a provided text label and returns a list of labels for texts whose
@@ -127,6 +157,7 @@ class LSH:
                 near duplicates.
             sensitivity (int): Number of unique buckets two ids must co-occur in to be
                 considered a near duplicate pair.
+            include_similarity (bool): return similarity alongside estimated near duplicates.
 
         Returns:
             list: Candidate duplicates for provided text label.
@@ -152,7 +183,8 @@ class LSH:
             minhash_signature,
             candidates_dict,
             sensitivity,
-            min_jaccard
+            min_jaccard,
+            include_similarity
         )
 
         return near_duplicates
