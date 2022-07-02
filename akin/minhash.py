@@ -1,4 +1,3 @@
-import heapq
 import numpy as np
 import mmh3
 
@@ -15,7 +14,7 @@ class MinHash:
 
     """
 
-    def __init__(self, n_gram=9, n_gram_type='char', permutations=100, hash_bits=64, seed=None):
+    def __init__(self, n_gram=9, n_gram_type='char', permutations=100, hash_bits=64, seed=1):
         """ Generates a minhash signature matrix for texts in a corpus.
 
         Args:
@@ -183,8 +182,6 @@ class BottomK(MinHash):
         signatures = []
         for document in shingles:
             signature = []
-            # Uses a heap queue to make finding n smallest values more efficient.
-            heapq.heapify(signature)
 
             if len(document) <= self.permutations:
                 raise ValueError(
@@ -192,10 +189,9 @@ class BottomK(MinHash):
                 )
 
             for shingle in document:
-                hashed_shingle = self._hashing(shingle, self.seed)
-                heapq.heappush(signature, hashed_shingle)
+                signature.append(self._hashing(shingle, self.seed))
 
-            k_smallest_hashes = heapq.nsmallest(self.permutations, signature)
+            k_smallest_hashes = sorted(signature)[:self.permutations]
             signatures.append(tuple(k_smallest_hashes))
 
         return signatures
