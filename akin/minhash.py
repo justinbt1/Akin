@@ -183,7 +183,6 @@ class BottomK(MinHash):
         signatures = []
         for document in shingles:
             signature = []
-            heapq.heapify(signature)
 
             if len(document) <= self.permutations:
                 raise ValueError(
@@ -191,12 +190,9 @@ class BottomK(MinHash):
                 )
 
             for shingle in document:
-                hashed_shingle = self._hashing(shingle, self.seed)
-                heapq.heappush(signature, hashed_shingle)
-                # signature.append(self._hashing(shingle, self.seed))
+                signature.append(self._hashing(shingle, self.seed))
 
-            # k_smallest_hashes = sorted(signature)[:self.permutations]
-            k_smallest_hashes = heapq.nsmallest(self.permutations, signature)
+            k_smallest_hashes = sorted(signature)[:self.permutations]
             signatures.append(tuple(k_smallest_hashes))
 
         return signatures
