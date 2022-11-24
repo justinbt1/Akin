@@ -8,7 +8,6 @@ class DictionaryArray:
         n_arrays (int): Number of dictionary arrays to include.
 
     """
-
     def __init__(self, n_arrays):
         """ Wrapper for easy manipulation of a list of dictionary arrays.
 
