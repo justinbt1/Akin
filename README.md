@@ -2,7 +2,7 @@
 ![Python Version](https://img.shields.io/badge/Python-3.6%20%7C%203.10-blue.svg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![Build Status](https://app.travis-ci.com/justinbt1/Akin.svg?branch=main)](https://app.travis-ci.com/justinbt1/Akin)
-[![Downloads](https://pepy.tech/badge/akin)](https://pepy.tech/project/akin)
+[![Downloads](https://static.pepy.tech/badge/akin)](https://pepy.tech/project/akin)
 <br>
 Python library for detecting near duplicate texts in a corpus at scale using Locality Sensitive Hashing, 
 adapted from the algorithm described in chapter three of 
