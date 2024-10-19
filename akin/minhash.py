@@ -14,7 +14,6 @@ class MinHash:
         seed (int): Seed used to generate signatures.
 
     """
-
     def __init__(self, n_gram=9, n_gram_type='char', permutations=100, hash_bits=64, seed=None):
         """ Generates a minhash signature matrix for texts in a corpus.
 
@@ -32,8 +31,8 @@ class MinHash:
             raise ValueError(
                 'Only "char" and "term" n_gram types are supported.'
             )
+        
         self.n_gram_type = n_gram_type
-
         self.permutations = permutations
 
         if hash_bits not in [32, 64, 128]:
