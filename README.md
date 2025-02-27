@@ -76,6 +76,6 @@ adjacency_list = lsh.adjacency_list(min_jaccard=0.55)
 print(adjacency_list)
 >>> {
         1: ['doc1', 4], 2: ['doc2'], 3: [], 4: [1, 'doc1'], 6: [], 
-        7: [], 8: [], 9: [], 'doc1': [1, 4], 'doc2': [2]
+        7: [], 8: [], 9: [], 'doc1': [8, 1, 4], 'doc2': [2]
     }
 ```
