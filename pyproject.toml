@@ -3,6 +3,7 @@ requires = [
     "setuptools>=42",
     "numpy",
     "cython",
-    "mmh3"
+    "mmh3",
+    "tqdm"
 ]
 build-backend = "setuptools.build_meta"
