@@ -2,25 +2,23 @@
 ![Python Version](https://img.shields.io/badge/Python-3.6%20%7C%203.12-blue.svg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![Build Status](https://app.travis-ci.com/justinbt1/Akin.svg?branch=main)](https://app.travis-ci.com/justinbt1/Akin)
-[![Downloads](https://static.pepy.tech/badge/akin)](https://pepy.tech/project/akin)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/akin)
 <br>
 Python library for detecting near duplicate texts in a corpus at scale using Locality Sensitive Hashing, 
 adapted from the algorithm described in chapter three of 
-[Mining Massive Datasets](http://infolab.stanford.edu/~ullman/mmds/ch3.pdf). This algorithm identifies similar texts in 
-a corpus efficiently by estimating their Jaccard similarity with sub-linear time complexity. This can be used to detect 
+[Mining Massive Datasets](http://infolab.stanford.edu/~ullman/mmds/ch3.pdf).  
+
+This algorithm identifies similar texts in 
+a corpus by efficiently estimating their Jaccard similarity with sub-linear time complexity. This can be used to detect 
 near duplicate texts at scale or locate different versions of a document.  
 
-### Warning!
-Note this library is in a beta 0. version and may be subject to frequent breaking changes!  
-Please pin your versions to avoid these changes from breaking your code.
 
 ### Installation
 Install from PyPI using pip:
-```python3 pip install akin```  
-Note for the ARM Apple M1 architecture some dependencies may need to be installed separately using conda.
+```python3 -m pip install akin```  
 
 ### API Documentation
-See the [full documentation here](https://github.com/justinbt1/Akin/blob/dev/docs/api_documentation.md) for API 
+See the [API documentation here](https://github.com/justinbt1/Akin/blob/dev/docs/api_documentation.md) for API 
 and usage guide.
 
 ### Quick Start Example
