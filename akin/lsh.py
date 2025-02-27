@@ -256,7 +256,7 @@ class LSH:
             dict: Adjacency list.
 
         """
-        if not labels:
+        if labels is None:
             labels = self.keys.keys()
 
         if sensitivity > self.no_of_bands:

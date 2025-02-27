@@ -33,7 +33,7 @@ class DictionaryArray:
             value: Value to add to set in specified dictionary key.
 
         """
-        if value:
+        if value is not None:
             bucket = self._hash_arrays[array_id].get(key)
             if bucket:
                 bucket.add(value)
