@@ -117,7 +117,7 @@ class MinHash:
         return hashed_shingle
 
 
-class MultiHash(MinHash):
+class KMinHash(MinHash):
     """ Generates minhash signatures by concatenating the min value of j
     permutation hashes.
 
@@ -183,7 +183,7 @@ class MultiHash(MinHash):
         return self._multi_hash(shingles)
 
 
-class BottomK(MinHash):
+class UniMinHash(MinHash):
     """ Generates minhash signatures using k-smallest values of a single
     permutation hash.
 
