@@ -2,7 +2,7 @@ import math
 import mmh3
 from tqdm import tqdm
 
-from dedupper import DictionaryArray
+from akin import DictionaryArray
 
 
 class LSH:
