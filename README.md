@@ -11,10 +11,6 @@ adapted from the algorithm described in chapter three of
 a corpus efficiently by estimating their Jaccard similarity with sub-linear time complexity. This can be used to detect 
 near duplicate texts at scale or locate different versions of a document.  
 
-### Warning!
-Note this library is in a beta 0. version and may be subject to frequent breaking changes!  
-Please pin your versions to avoid these changes from breaking your code.
-
 ### Installation
 Install from PyPI using pip:
 ```python3 pip install akin```  
