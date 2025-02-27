@@ -164,6 +164,8 @@ class LSH:
                     value=label
                 )
 
+            del self.keys[label]
+
     def query(
             self,
             label,
