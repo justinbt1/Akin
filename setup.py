@@ -12,7 +12,7 @@ project_urls = {
 
 setup(
     name='akin',
-    version='1.0.0',
+    version='1.0.1',
     description=description,
     long_description=long_description,
     long_description_content_type='text/markdown',
