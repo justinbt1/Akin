@@ -164,6 +164,8 @@ class LSH:
                     value=label
                 )
 
+            del self.keys[label]
+
     def query(
             self,
             label,
@@ -254,7 +256,7 @@ class LSH:
             dict: Adjacency list.
 
         """
-        if not labels:
+        if labels is None:
             labels = self.keys.keys()
 
         if sensitivity > self.no_of_bands:
