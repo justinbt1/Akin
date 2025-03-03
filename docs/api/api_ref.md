@@ -1,0 +1,3 @@
+# Akin API Reference
+## MinHash
+###
