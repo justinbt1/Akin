@@ -1,2 +1,5 @@
 site_name: Akin
 theme: readthedocs
+nav:
+  - Home: index.md
+  - API Reference: api/api_ref.md
