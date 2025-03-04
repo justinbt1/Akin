@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>API Reference - Akin</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "API Reference";
+        var mkdocs_page_input_path = "api/api_ref.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> Akin
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../getting_started/">Getting Started</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">API Reference</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#minhash">MinHash</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#uniminhash">UniMinHash</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#parameters">Parameters</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#properties">Properties</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#multiminhash">MultiMinHash</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#parameters_1">Parameters</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#properties_1">Properties</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#lsh">LSH</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#parameters_2">Parameters</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#methods">Methods</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#properties_2">Properties</a>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">Akin</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">API Reference</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="akin-api-reference">Akin API Reference</h1>
+<h2 id="minhash">MinHash</h2>
+<p>The Akin library offers two classes for generating the MinHash object: UniMinHash and MultiMinHash.</p>
+<h2 id="uniminhash">UniMinHash</h2>
+<p>Creates a MinHash object that contains matrix of Minhash Signatures for each text.</p>
+<p>Texts are shingled and hashed using the bottom-k variant of the MinHash algorithm, each text is hashed once and the k-smallest values selected for k permutations. This method is less computationally intensive than multi_hash but also less stable.</p>
+<pre><code class="language-python">UniMinHash(
+    text, 
+    n_gram=9, 
+    n_gram_type='char', 
+    permutations=100, 
+    hash_bits=64, 
+    seed=None
+)
+</code></pre>
+<h3 id="parameters">Parameters</h3>
+<p>text <code>{list or ndarray}</code><br />
+Iterable containing strings of text for each text in a corpus.  </p>
+<p>n_gram <code>int, optional, default: 9</code><br />
+Size of each overlapping text shingle to break text into prior to hashing. Shingle size should be carefully selected dependent on average text length as too low a shingle size will yield false similarities, whereas too high a shingle size will fail to return similar documents.  </p>
+<p>For character shingles a size of 5 is recommended for shorter texts such as emails, the default size of 9 is recommended for longer texts or documents.</p>
+<p>n_gram_type <code>str, optional, default: 'char'</code><br />
+Type of n gram to use for shingles, must be 'char' to split text into character shingles or 'term' to split text into overlapping sequences of words.</p>
+<p>permutations <code>int, optional, default: 100</code><br />
+Number of randomly sampled hash values to use for generating each texts minhash signature. Intuitively the larger the number of permutations, the more accurate the estimated Jaccard similarity between the texts but longer the algorithm will take to run.</p>
+<p>hash_bits <code>int, optional, default: 64</code><br />
+Hash value size to be used to generate minhash signatures from shingles, must be 32, 64 or 128 bit.  </p>
+<p>Hash value size should be chosen based on text length and a trade off between performance and accuracy. Lower hash values risk false hash collisions leading to false similarities between documents for larger corpora of texts.</p>
+<p>seed <code>int, optional, default: None</code><br />
+Seed from which to generate random hash function, necessary for reproducibility or to allow updating of the LSH model with new minhash values later.</p>
+<h3 id="properties">Properties</h3>
+<p>n_gram: <code>int</code><br />
+Returns size of each overlapping text shingle used to create minhash signatures.</p>
+<p>n_gram_type: <code>int</code><br />
+Returns type of n-gram used for text shingling.</p>
+<p>permutations: <code>int</code><br />
+Returns number of permutations used to create signatures.</p>
+<p>hash_bits: <code>int</code><br />
+Returns hash value size used to create signatures.</p>
+<p>seed: <code>int</code><br />
+Returns seed value used to generate random hashes in minhash function.</p>
+<p>signatures: <code>numpy.array</code><br />
+Returns matrix of text signatures generated by minhash function.<br />
+n = text row, m = selected permutations.</p>
+<h2 id="multiminhash">MultiMinHash</h2>
+<p>Creates a MinHash object that contains matrix of Minhash Signatures for each text.  </p>
+<p>Texts are shingled, then hashed once per permutation and the minimum hash value selected each time to construct a signature.  </p>
+<pre><code class="language-python">MultiMinHash(
+    text, 
+    n_gram=9, 
+    n_gram_type='char', 
+    permutations=100, 
+    hash_bits=64, 
+    seed=None
+)
+</code></pre>
+<h3 id="parameters_1">Parameters</h3>
+<p>text <code>{list or ndarray}</code><br />
+Iterable containing strings of text for each text in a corpus.</p>
+<p>n_gram <code>int, optional, default: 9</code><br />
+Size of each overlapping text shingle to break text into prior to hashing. Shingle size should be carefully selected dependent on average text length as too low a shingle size will yield false similarities, whereas too high a shingle size will fail to return similar documents.  </p>
+<p>For character shingles a size of 5 is recommended for shorter texts such as emails, the default size of 9 is recommended for longer texts or documents.</p>
+<p>n_gram_type <code>str, optional, default: 'char'</code><br />
+Type of n gram to use for shingles, must be 'char' to split text into character shingles or 'term' to split text into overlapping sequences of words.</p>
+<p>permutations <code>int, optional, default: 100</code><br />
+Number of randomly sampled hash values to use for generating each texts minhash signature. Intuitively the larger the number of permutations, the more accurate the estimated Jaccard similarity between the texts but longer the algorithm will take to run.</p>
+<p>hash_bits <code>int, optional, default: 64</code><br />
+Hash value size to be used to generate minhash signatures from shingles, must be 32, 64 or 128 bit. Hash value size should be chosen based on text length and a trade off between performance and accuracy. Lower hash values risk false hash collisions leading to false similarities between documents for larger corpora of texts.</p>
+<p>seed <code>int, optional, default: None</code><br />
+Seed from which to generate random hash function, necessary for reproducibility or to allow updating of the LSH model with new minhash values later.</p>
+<h3 id="properties_1">Properties</h3>
+<p>n_gram: <code>int</code><br />
+Returns size of each overlapping text shingle used to create minhash signatures.</p>
+<p>n_gram_type: <code>int</code><br />
+Returns type of n-gram used for text shingling.</p>
+<p>permutations: <code>int</code><br />
+Returns number of permutations used to create signatures.</p>
+<p>hash_bits: <code>int</code><br />
+Returns hash value size used to create signatures.</p>
+<p>seed: <code>int</code><br />
+Returns seed value used to generate random hashes in minhash function.</p>
+<p>signatures: <code>numpy.array</code><br />
+Returns matrix of text signatures generated by minhash function.<br />
+n = text row, m = selected permutations.</p>
+<h2 id="lsh">LSH</h2>
+<p>Creates an LSH model of text similarity that can be used to return similar texts based on estimated Jaccard similarity.</p>
+<pre><code class="language-python">LSH(permutations, no_of_bands=None, seed=1)
+</code></pre>
+<h3 id="parameters_2">Parameters</h3>
+<p>permutations <code>int</code><br />
+Number of permutations used in minhashing signatures MultiMinHash or UniMultiHash.</p>
+<p>no_of_bands <code>optional, default: permutations // 2</code><br />
+Number of bands to break minhash signature into before hashing into buckets. A smaller number of bands will result in a stricter algorithm, requiring larger possibly leading to false negatives missing some similar texts, whereas a higher number may lead to false similarities.</p>
+<p>seed <code>int optional, default: 1</code><br />
+Seed from which to generate random hash function, necessary for reproducibility or to allow updating of the LSH model with new minhash values later.</p>
+<h3 id="methods">Methods</h3>
+<pre><code class="language-python">.update(minhash_signatures, labels)
+</code></pre>
+<p>Updates model with minhash signatures and their corresponding labels.</p>
+<p>minhash <code>list</code><br />
+MinHash object containing signatures of new texts, parameters must match any previous MinHash objects.  </p>
+<p>new_labels <code>list</code><br />
+List, array or Pandas series containing unique labels for each text.</p>
+<pre><code class="language-python">.query(label, min_jaccard=None, sensitivity=1, include_similarity=False)
+</code></pre>
+<p>Returns list of near-duplicates for text with provided label.</p>
+<p>label <code>str</code><br />
+Label of text for which to return near-duplicates.  </p>
+<p>min_jaccard <code>float optional, default: None</code><br />
+Minimum Jaccard Similarity for texts to be returned as near duplicates. 
+If specified the Jaccard similarity for each candidate near-duplicate signature will be explicitly calculated, 
+improving accuaracy but also increasing run time.</p>
+<p>sensitivity <code>int optional, default: 1</code><br />
+umber of unique buckets two ids must co-occur in to be considered a candidate near-duplicate pair.</p>
+<p>include_similarity <code>bool optional, default: False</code><br />
+Return similarity score alongside estimated near duplicates, if selected scores are returned as a list of (label, score) tuples.
+Note, a min_jaccard score must be provided.</p>
+<pre><code class="language-python">.remove(labels)
+</code></pre>
+<p>Remove label and associated text signature from model.</p>
+<p>labels <code>list</code><br />
+List of labels to remove from the LSH model.</p>
+<pre><code class="language-python">.adjacency_list(labels=None, min_jaccard=None, sensitivity=1)
+</code></pre>
+<p>Returns an adjacency list dictionary mapping all labels to their estimated near duplicates. 
+Can be used to create an undirected graph for texts in the LSH object.</p>
+<p>label <code>list optional, default: None</code> <br />
+List of labels to limit the adjacency list to.</p>
+<p>min_jaccard <code>float optional, default: None</code><br />
+Minimum Jaccard Similarity for texts to be returned as near duplicates. 
+If specified the Jaccard similarity for each candidate near-duplicate signature will be explicitly calculated, 
+improving accuaracy but also increasing run time.</p>
+<p>sensitivity <code>int optional, default: 1</code><br />
+umber of unique buckets two ids must co-occur in to be considered a candidate near-duplicate pair.</p>
+<h3 id="properties_2">Properties</h3>
+<p>no_of_bands: <code>int</code><br />
+Number of bands used in LSH model.</p>
+<p>seed: <code>int</code><br />
+Seed used to generate random hash function.</p>
+<p>permutations: <code>int</code><br />
+Number of permutations used to create minhash signatures used in LSH model.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../../getting_started/" class="btn btn-neutral float-left" title="Getting Started"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../../getting_started/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
