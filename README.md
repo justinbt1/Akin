@@ -3,6 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![Build Status](https://app.travis-ci.com/justinbt1/Akin.svg?branch=main)](https://app.travis-ci.com/justinbt1/Akin)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/akin)
+![Zenodo](https://zenodo.org/badge/DOI/10.5281/zenodo.14969173.svg)
 
 <br>
 Python library for detecting near duplicate texts in a corpus at scale using Locality Sensitive Hashing.
