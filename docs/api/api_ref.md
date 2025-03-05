@@ -8,7 +8,7 @@ Creates a MinHash object that contains matrix of Minhash Signatures for each tex
 Texts are shingled and hashed using the bottom-k variant of the MinHash algorithm, each text is hashed once and the k-smallest values selected for k permutations. This method is less computationally intensive than multi_hash but also less stable.
 
 ```python
-UniMinHash(
+akin.UniMinHash(
     text, 
     n_gram=9, 
     n_gram_type='char', 
@@ -66,7 +66,7 @@ Creates a MinHash object that contains matrix of Minhash Signatures for each tex
 Texts are shingled, then hashed once per permutation and the minimum hash value selected each time to construct a signature.  
 
 ```python
-MultiMinHash(
+akin.MultiMinHash(
     text, 
     n_gram=9, 
     n_gram_type='char', 
@@ -120,7 +120,7 @@ n = text row, m = selected permutations.
 Creates an LSH model of text similarity that can be used to return similar texts based on estimated Jaccard similarity.
 
 ```python
-LSH(permutations, no_of_bands=None, seed=1)
+akin.LSH(permutations, no_of_bands=None, seed=1)
 ```
 ### Parameters
 permutations `int`  
