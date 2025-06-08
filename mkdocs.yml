@@ -1,5 +1,4 @@
 site_name: Akin
-theme: readthedocs
 nav:
   - Getting Started: getting_started.md
   - API Reference: api/api_ref.md
