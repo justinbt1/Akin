@@ -1,3 +1,15 @@
+[project]
+name = "akin"
+version = "0.1.0"
+description = "Python library for detecting near duplicate texts in a corpus at scale."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "mmh3>=5.1.0",
+    "numpy>=2.3.1",
+    "tqdm>=4.67.1",
+]
+
 [build-system]
 requires = [
     "setuptools>=61.0",
