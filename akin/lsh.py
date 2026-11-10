@@ -5,6 +5,27 @@ from tqdm import tqdm
 from akin import DictionaryArray
 
 
+def hyperparameter_optimisation(fixed_n, target_s, target_p):
+    best_b, best_r = None, None
+    min_error = float('inf')
+    
+    print(f"Searching factors for fixed n = {fixed_n}...\n")
+    
+    for r in range(1, fixed_n + 1):
+        if fixed_n % r == 0:
+            b = fixed_n // r
+            p_actual = 1 - (1 - target_s**r)**b
+            error = abs(p_actual - target_p)
+            
+            if error < min_error:
+                min_error = error
+                best_b, best_r = b, r
+
+    actual_p = 1 - (1 - target_s**best_r)**best_b
+
+    return best_b, best_r, actual_p
+
+
 class LSH:
     """ Locality Sensitive Hashing.
 
@@ -15,7 +36,15 @@ class LSH:
 
     """
 
-    def __init__(self, permutations, no_of_bands=None, seed=1):
+    def __init__(
+            self,
+            permutations,
+            jaccard_similarity=None,
+            probability=0.95,
+            n_bands=None,
+            n_rows=None,
+            seed=1
+        ):
         """ Initialize the LSH object.
 
         Args:
@@ -25,8 +54,20 @@ class LSH:
             seed (int): Random seed used for hashing.
 
         """
-        if no_of_bands is None:
-            no_of_bands = permutations // 2
+
+        if n_bands and n_rows:
+            self.n_bands = n_bands
+            self.n_rows = n_rows
+            self._buckets = DictionaryArray(n_bands)
+        elif n_bands or n_rows:
+            raise ValueError('Both n_bands and n_rows must be provided!')
+        elif jaccard_similarity is not None:
+            hyperparameter_optimisation()
+        else:
+            raise ValueError(
+                'Target Jaccard similarity or n_bands and n_rows must be provided!'
+            )
+            
 
         self.no_of_bands = no_of_bands
         self.seed = seed
