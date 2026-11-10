@@ -58,20 +58,21 @@ class LSH:
         if n_bands and n_rows:
             self.n_bands = n_bands
             self.n_rows = n_rows
-            self._buckets = DictionaryArray(n_bands)
         elif n_bands or n_rows:
             raise ValueError('Both n_bands and n_rows must be provided!')
         elif jaccard_similarity is not None:
-            hyperparameter_optimisation()
+            self.n_bands, self.n_rows, _ = hyperparameter_optimisation(
+                permutations,
+                jaccard_similarity,
+                probability
+            )
         else:
             raise ValueError(
                 'Target Jaccard similarity or n_bands and n_rows must be provided!'
             )
-            
 
-        self.no_of_bands = no_of_bands
+        self._buckets = DictionaryArray(n_bands)
         self.seed = seed
-        self._buckets = DictionaryArray(no_of_bands)
         self.permutations = permutations
         self.keys = {}
 
