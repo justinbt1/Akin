@@ -1,9 +1,8 @@
-import heapq
 import numpy as np
 import mmh3
 
 
-class MinHash:
+class _MinHash:
     """ MinHash base class.
 
     Attributes:
@@ -21,7 +20,7 @@ class MinHash:
         n_gram_type='char',
         permutations=100,
         hash_bits=64,
-        seed=None
+        seed=1
     ):
         """ Generates a minhash signature matrix for texts in a corpus.
 
@@ -35,6 +34,11 @@ class MinHash:
             seed (int): Seeds from which to generate random hash function.
 
         """
+        if not isinstance(n_gram, int):
+            raise TypeError('N gram must be an integer.')
+        elif n_gram < 2:
+            raise ValueError('N gram must be greater than 1.')
+
         self.n_gram = n_gram
 
         if n_gram_type not in ['char', 'term']:
@@ -43,18 +47,30 @@ class MinHash:
             )
 
         self.n_gram_type = n_gram_type
+
+        if not isinstance(permutations, int):
+            raise TypeError('Permutations must be an integer.')
+        elif permutations < 1:
+            raise ValueError('Permutations must be at least 1.')
+
         self.permutations = permutations
 
-        if hash_bits not in [32, 64, 128]:
+        if not isinstance(hash_bits, int):
+            raise TypeError('Hash bits must be an integer.')
+        elif hash_bits not in [32, 64, 128]:
             raise ValueError(
                 'Only 32, 64 and 128 bit hashes are supported.'
             )
 
         self.hash_bits = hash_bits
 
-        if seed:
-            self.seed = seed
-            np.random.seed(seed)
+        if not isinstance(seed, int):
+            raise TypeError('Seed must be an integer.')
+        elif not 0 <= seed < 2**32:
+            raise ValueError('Seed must be between 0 and 2**32 - 1.')
+
+        self.seed = seed
+        self.hash_range = np.random.default_rng(seed)
 
     def _k_shingles(self, texts):
         """ Generates shingles for each input text.
@@ -69,24 +85,22 @@ class MinHash:
             list: Shingle list generated for each input text.
 
         """
-        trim_overflow = (self.n_gram - 1) * -1
-
         if isinstance(texts, str):
             texts = [texts]
 
         for text in texts:
             if self.n_gram_type == 'char':
-                shingles = [
-                    text[char:char + self.n_gram] for char in range(len(text))
-                ][:trim_overflow]
+                shingles = {
+                    text[char:char + self.n_gram] for char in range(
+                        len(text) - self.n_gram + 1
+                    )
+                }
             else:
                 terms = text.split()
-                shingles = [
-                    ' '.join(
-                        terms[term:term + self.n_gram]) for term in range(
-                            len(terms)
-                        )
-                ][:trim_overflow]
+                shingles = {
+                    ' '.join(terms[term:term + self.n_gram])
+                    for term in range(len(terms) - self.n_gram + 1)
+                }
 
             if not shingles:
                 raise ValueError(
@@ -108,16 +122,16 @@ class MinHash:
 
         """
         if self.hash_bits == 64:
-            hashed_shingle = mmh3.hash64(shingle, seed)[0]
+            hashed_shingle = mmh3.hash64(shingle, seed, signed=False)[0]
         elif self.hash_bits == 32:
-            hashed_shingle = mmh3.hash(shingle, seed)
+            hashed_shingle = mmh3.hash(shingle, seed, signed=False)
         else:
-            hashed_shingle = mmh3.hash128(shingle, seed)
+            hashed_shingle = mmh3.hash128(shingle, seed, signed=False)
 
         return hashed_shingle
 
 
-class KMinHash(MinHash):
+class KMinHash(_MinHash):
     """ Generates minhash signatures by concatenating the min value of j
     permutation hashes.
 
@@ -129,10 +143,10 @@ class KMinHash(MinHash):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.hash_seeds = np.random.randint(
-            low=1,
-            high=100000000,
-            size=self.permutations
+        self.hash_seeds = self.hash_range.choice(
+            2**32,
+            size=self.permutations,
+            replace=False
         )
 
     def _multi_hash(self, shingles):
@@ -156,7 +170,7 @@ class KMinHash(MinHash):
                 for shingle in document:
                     hash_value = self._hashing(shingle, int(seed))
 
-                    if not min_value:
+                    if min_value is None:
                         min_value = hash_value
                     elif min_value > hash_value:
                         min_value = hash_value
@@ -183,53 +197,75 @@ class KMinHash(MinHash):
         return self._multi_hash(shingles)
 
 
-class UniMinHash(MinHash):
-    """ Generates minhash signatures using k-smallest values of a single
-    permutation hash.
+class UniMinHash(_MinHash):
+    """ Generates minhash signatures using One Permutation Hashing (OPH)
+    with optimal densification.
+
+    Each shingle is hashed once. The hash range is split into
+    ``permutations`` equal bins and the minimum hash in each bin forms one
+    position of the signature. Empty bins are filled from a non-empty bin
+    chosen by a seeded probe sequence that is shared by every document, so
+    signature positions stay aligned across documents and are compatible
+    with LSH banding.
 
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._probe_seed = (self.seed + 1) % (2**32)
+        self._probe_cache = {}
 
-    def _k_smallest_hash(self, shingles):
-        """ Generates a texts minhash signature using k smallest neighbours
-        method.
+    def _probe(self, bin_id, attempt):
+        """ Bin to borrow from for an empty bin, identical for all documents.
 
-        Use a single random hash to simulate a shuffle of each text's shingles.
-        Then selecting i-smallest minimum hash values for j permutations.
+        Probe sequences are cached per bin and extended on demand.
+        """
+        sequence = self._probe_cache.setdefault(bin_id, [])
+        while len(sequence) <= attempt:
+            sequence.append(
+                self._hashing(
+                    f'{bin_id}:{len(sequence)}',
+                    self._probe_seed
+                ) % self.permutations
+            )
+        return sequence[attempt]
 
-        Faster but less stable than multi hash method.
+    def _one_permutation_hash(self, shingles):
+        """ Generates signatures using one permutation hashing.
+
+        Args:
+            shingles (iterable): Shingle lists, one per document.
 
         Returns:
-            list: List of text signatures generated using k smallest
-                neighbours method.
+            list: List of minhash tuple signatures.
 
         """
+        n_bins = self.permutations
+        bits = self.hash_bits
         signatures = []
+
         for document in shingles:
-            signature = []
-            # Uses a heap queue to make finding smallest values more efficient.
-            heapq.heapify(signature)
-
-            if len(document) <= self.permutations:
-                raise ValueError(
-                    'N permutations must not be >= n shingles for '
-                    'k_smallest_values method\n'
-                    f'{len(document) - 1} shingles found for '
-                    f'{self.permutations} permutations.'
-                )
-
+            bins = [None] * n_bins
             for shingle in document:
-                hashed_shingle = self._hashing(shingle, self.seed)
-                heapq.heappush(signature, hashed_shingle)
+                hash_value = self._hashing(shingle, seed=self.seed)
+                bin_id = (hash_value * n_bins) >> bits
+                current = bins[bin_id]
+                if current is None or hash_value < current:
+                    bins[bin_id] = hash_value
 
-            k_smallest_hashes = heapq.nsmallest(self.permutations, signature)
-            signatures.append(tuple(k_smallest_hashes))
+            filled = list(bins)
+            for bin_id in range(n_bins):
+                if bins[bin_id] is None:
+                    attempt = 0
+                    while bins[self._probe(bin_id, attempt)] is None:
+                        attempt += 1
+                    filled[bin_id] = bins[self._probe(bin_id, attempt)]
+
+            signatures.append(tuple(filled))
 
         return signatures
 
     def transform(self, text_corpus):
-        """ Transform text to Minhash arrays using k-smallest hash method.
+        """ Transform text to Minhash arrays using one permutation hashing.
 
         Args:
             text_corpus(list): 2D Iterable containing text content of each
@@ -241,4 +277,4 @@ class UniMinHash(MinHash):
         """
         shingles = self._k_shingles(text_corpus)
 
-        return self._k_smallest_hash(shingles)
+        return self._one_permutation_hash(shingles)
