@@ -1,36 +1,70 @@
-import math
 import mmh3
-from tqdm import tqdm
 
-from akin import DictionaryArray
+from akin import DictionaryArray, optimise
 
 
 class LSH:
-    """ Locality Sensitive Hashing.
+    """ Index labelled MinHash signatures using locality sensitive hashing.
 
     Attributes:
-        permutations (int): Number of permutations used in MinHash.
-        no_of_bands (int): Number of bands used in model.
-        seed (int): Random seed used for hashing.
+        permutations (int): Number of values in each MinHash signature.
+        n_bands (int): Number of bands in each signature.
+        n_rows (int): Number of signature values in each band.
+        seed (int): Seed used to hash bands into buckets.
+        keys (dict): Mapping from document labels to stored signatures.
 
     """
+    def __init__(
+            self,
+            permutations,
+            jaccard_similarity=None,
+            probability=0.95,
+            n_bands=None,
+            n_rows=None,
+            seed=1
+    ):
+        """ Initialize an index with explicit or automatically selected bands.
 
-    def __init__(self, permutations, no_of_bands=None, seed=1):
-        """ Initialize the LSH object.
+        Provide both n_bands and n_rows, with their product equal to permutations, or
+        provide jaccard_similarity for automatic selection. The probability model used
+        for automatic selection assumes independent MinHash positions and is
+        approximate for densified OPH signatures.
 
         Args:
-            no_of_bands (int): Number of bands to break minhash signature into.
-            permutations (int): Number of permutations (hashes) in minhash
-                signature.
-            seed (int): Random seed used for hashing.
+            permutations (int): Number of values in each MinHash signature.
+            jaccard_similarity (float, optional): Target Jaccard similarity used for
+                automatic band selection, not a query filter.
+            probability (float, optional): Target probability of retrieving a candidate
+                at jaccard_similarity. Defaults to 0.95.
+            n_bands (int, optional): Explicit number of bands.
+            n_rows (int, optional): Explicit number of values per band.
+            seed (int, optional): Seed for band hashing. Defaults to 1.
 
         """
-        if no_of_bands is None:
-            no_of_bands = permutations // 2
+        if n_bands and n_rows:
+            if n_bands * n_rows != permutations:
+                raise ValueError('n_bands * n_rows must equal permutations')
 
-        self.no_of_bands = no_of_bands
+            self.n_bands = n_bands
+            self.n_rows = n_rows
+
+        elif n_bands or n_rows:
+            raise ValueError('Both n_bands and n_rows must be provided!')
+
+        elif jaccard_similarity is not None:
+            self.n_bands, self.n_rows, _ = optimise.hyperparameters(
+                permutations,
+                jaccard_similarity,
+                probability
+            )
+
+        else:
+            raise ValueError(
+                'Target Jaccard similarity or n_bands and n_rows must be provided!'
+            )
+
+        self._buckets = DictionaryArray(self.n_bands)
         self.seed = seed
-        self._buckets = DictionaryArray(no_of_bands)
         self.permutations = permutations
         self.keys = {}
 
@@ -38,104 +72,64 @@ class LSH:
         """ Break signatures into bands and hash components to buckets.
 
         Args:
-            signature (tuple): a minhash signature.
+            signature (tuple): MinHash signature to split into bands.
+
+        Returns:
+            list: Bucket identifiers in band order.
 
         """
         band_hashes = []
-        band_size = math.ceil(len(signature) / self.no_of_bands)
-        for i in range(0, self.permutations, band_size):
-            band = str(signature[i:i + band_size])
+        for i in range(0, self.permutations, self.n_rows):
+            band = str(signature[i:i + self.n_rows])
             bucket_id = mmh3.hash64(band, self.seed)[0]
             band_hashes.append(bucket_id)
 
         return band_hashes
 
-    @staticmethod
-    def _jaccard_similarity(query_signature, candidate):
-        """ Estimate jaccard similarity ratio of signatures.
-
-        Args:
-            query_signature (tuple): Query minhash signature.
-            candidate (dict): Candidate signature.
-
-        Returns:
-            float: Estimated jaccard ratio.
-
-        """
-        intersection = len(set(query_signature) & set(candidate))
-        union = len(set(query_signature) | set(candidate))
-        jaccard_ratio = intersection / union
-
-        return jaccard_ratio
-
-    def _candidate_duplicates(
+    def _estimate_jaccard(
             self,
             query_signature,
-            candidates,
-            sensitivity=1,
-            jaccard_threshold=None,
-            include_similarity=False
+            candidates
     ):
-        """ Identify candidate duplicates and check Jaccard Similarity.
+        """ Estimate Jaccard similarity from matching signature positions.
 
         Args:
-            query_signature (tuple): Query minhash signature.
-            candidates (dict): List of bucket ids.
-            sensitivity (int): Number of identical buckets two ids must occur
-                in to be considered a near duplicate pair.
-            jaccard_threshold (float): Minimum Jaccard Similarity for
-                documents to be counted as near duplicates.
-            include_similarity (bool): return similarity alongside estimated
-                near duplicates.
+            query_signature (tuple): Query MinHash signature.
+            candidates (set): Candidate document labels.
 
         Returns:
-            list: Near duplicate document ids.
+            list: Unsorted (estimated_similarity, label) tuples.
 
         """
-        # Apply Jaccard threshold and unzip pairs.
-        if jaccard_threshold or sensitivity != 1 or include_similarity:
-            matches = []
-            for candidate, occurrence_count in candidates.items():
-                if sensitivity != 1:
-                    if occurrence_count < sensitivity:
-                        continue
+        matches = []
+        for candidate in candidates:
+            estimated_jaccard_ratio = sum(
+                a == b for a, b in zip(query_signature, self.keys[candidate])
+            ) / len(query_signature)
 
-                if jaccard_threshold or include_similarity:
-                    jaccard_ratio = self._jaccard_similarity(
-                        query_signature,
-                        self.keys[candidate]
-                    )
+            matches.append((estimated_jaccard_ratio, candidate))
 
-                    if jaccard_threshold:
-                        if jaccard_ratio < jaccard_threshold:
-                            continue
-
-                    if include_similarity:
-                        matches.append((jaccard_ratio, candidate))
-                    else:
-                        matches.append(candidate)
-
-                else:
-                    matches.append(candidate)
-
-            return matches
-
-        else:
-            return list(candidates)
+        return matches
 
     def update(self, minhash_signatures, labels):
-        """ Updates LSH object with new MinHash matrix and labels.
+        """ Add document signatures and their labels to the index.
+
+        All signatures must contain permutations values and use the same MinHash
+        configuration, hash seeds and container representation.
 
         Args:
-            minhash_signatures (list): new minhash signatures to add to LSH
-                object.
+            minhash_signatures (list): List of MinHash signatures.
+            labels (list): Corresponding unique, hashable document labels.
 
         """
         if len(minhash_signatures[0]) != self.permutations:
             raise IndexError(
                 'Number of permutations in minhash must be '
-                f'{self.permutations} to match LSH model.'
+                f'{self.permutations} to match LSH model initialisation params.'
             )
+
+        if len(minhash_signatures) != len(labels):
+            raise IndexError('Length of minhash_signatures and labels must match.')
 
         for signature, label in zip(minhash_signatures, labels):
             if self.keys.get(label):
@@ -152,7 +146,7 @@ class LSH:
         """ Remove label and associated text signature from model.
 
         Args:
-            minhash_signatures (list): minhash signatures to remove from model.
+            labels (iterable): Labels of indexed documents to remove.
 
         """
         for label in labels:
@@ -169,108 +163,30 @@ class LSH:
     def query(
             self,
             label,
-            min_jaccard=None,
-            sensitivity=1,
             include_similarity=False
     ):
-        """ Returns near duplicates from model.
-
-        Takes a provided text label and returns a list of labels for texts
-        whose similarity with the provided text is above a provided threshold.
-
-        Can be used to create a recommendation model.
+        """ Returns near duplicates from model for estimated similarity threshol
 
         Args:
-            minhash_signature (tuple): minhash signature of text for which to
-                return near duplicates.
-            min_jaccard (float): Minimum Jaccard Similarity for texts to be
-                returned as near duplicates.
-            sensitivity (int): Number of unique buckets two ids must co-occur
-                in to be considered a near duplicate pair.
-            include_similarity (bool): return similarity alongside estimated
-                near duplicates.
+            label (hashable): Label of the indexed document to query.
+            include_similarity (bool, optional): Include positional MinHash
+                similarity estimates. Defaults to False.
 
         Returns:
-            list: Candidate duplicates for provided text label.
+            list: Candidate labels, or (estimated_similarity, label) tuples
+                when include_similarity is True.
 
         """
-        if sensitivity > self.no_of_bands:
-            raise ValueError('Sensitivity must be <= no of bands.')
-
-        candidates_dict = {}
+        candidates = set()
         minhash_signature = self.keys[label]
         for band_id, bucket_id in enumerate(self._lsh(minhash_signature)):
-            candidates = self._buckets.get(band_id, bucket_id)
-            for candidate in candidates:
-                existing_key = candidates_dict.get(candidate)
+            candidates.update(self._buckets.get(band_id, bucket_id))
 
-                if existing_key:
-                    existing_key += 1
-                else:
-                    candidates_dict[candidate] = 1
+        candidates.discard(label)
 
-        del candidates_dict[label]
-
-        near_duplicates = self._candidate_duplicates(
-            minhash_signature,
-            candidates_dict,
-            sensitivity,
-            min_jaccard,
-            include_similarity
-        )
+        if include_similarity:
+            near_duplicates = self._estimate_jaccard(minhash_signature, candidates)
+        else:
+            near_duplicates = list(candidates)
 
         return near_duplicates
-
-    def get_minhashes(self):
-        """ Returns set of minhashes contained in LSH model.
-
-        Returns:
-            set: set of all unique minhashes within LSH model.
-
-        """
-        values = self._buckets.values()
-        return values
-
-    def adjacency_list(
-        self,
-        labels=None,
-        min_jaccard=None,
-        sensitivity=1
-    ):
-        """ Returns adjacency list.
-
-        Iterates over texts, pairing each text with a list of labels whose
-        relationships with each text are above a certain threshold.
-
-        Can be used to create an undirected graph for texts in the LSH object.
-
-        Args:
-            minhash_signatures (list): list of minhash signatures to use as
-                keys.
-            min_jaccard (float): Minimum Jaccard Similarity for texts to be
-                returned as near duplicates.
-            sensitivity (int): Number of unique buckets two ids must co-occur
-                in to be considered a near duplicate pair.
-
-        Returns:
-            dict: Adjacency list.
-
-        """
-        if labels is None:
-            labels = self.keys.keys()
-
-        if sensitivity > self.no_of_bands:
-            raise ValueError(
-                'Sensitivity must be <= no of bands.'
-            )
-
-        adjacency_list = {}
-
-        for label in tqdm(labels):
-            adjacency_list[label] = self.query(
-                label,
-                min_jaccard,
-                sensitivity
-            )
-
-        return adjacency_list
