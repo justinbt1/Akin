@@ -87,7 +87,7 @@ class DictionaryArray:
 
     def values(self):
         """ Returns unique values from dictionaries.
-        
+
         Returns:
             set: Set of all values in dictionary arrays.
 
