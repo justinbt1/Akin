@@ -45,19 +45,19 @@ content = [
     'The Great Red Spot is large enough to accommodate Earth within its boundaries.'
 ]
 
-labels = [i for i in range(1, len(content))]
+labels = [i for i in range(0, len(content))]
 
 # Generate MinHash signatures.
 minhash = UniMinHash(n_gram=9, permutations=100, hash_bits=64, seed=3)
 signatures = minhash.transform(content)
 
 # Create LSH model.
-lsh = LSH(jaccard_similarity=0.5, probability=0.95)
+lsh = LSH(permutations=100, jaccard_similarity=0.5, probability=0.95)
 lsh.update(signatures, labels)
 
 # Query to find near duplicates for text 1.
-print(lsh.query(1))
->>> [8, 4]
+print(lsh.query(0))
+>>> [3, 7]
 
 # Generate minhash signature and add new texts to LSH model.
 new_text = [
@@ -69,7 +69,11 @@ new_text = [
 new_labels = ['doc1', 'doc2']
 
 new_signatures = minhash.transform(new_text)
-lsh.update(new_minhash, new_labels)
+lsh.update(new_signatures, new_labels)
+print(lsh.query(0))
+>>> ['doc_1', 3, 7]
 
 # Remove text and label from model.
-lsh.remove(5)
+lsh.remove([7])
+print(lsh.query(0))
+>>> ['doc1', 3]
