@@ -1,5 +1,4 @@
 # Akin
-![Python Version](https://img.shields.io/badge/Python-3.9%20%7C%203.14-blue.svg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![Build Status](https://app.travis-ci.com/justinbt1/Akin.svg?branch=main)](https://app.travis-ci.com/justinbt1/Akin)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/akin)
@@ -7,13 +6,20 @@
 <br>
 Python library for detecting near duplicate texts in a corpus at scale using Locality Sensitive Hashing.
 
+<br>
 This algorithm identifies similar texts in 
 a corpus by efficiently estimating their Jaccard similarity with sub-linear time complexity. This can be used to detect 
 near duplicate texts at scale or locate different versions of a document.  
 
 ### Installation
 Install from PyPI using pip:
-```python3 -m pip install akin```  
+```
+python3 -m pip install akin
+```
+Or with uv using:
+```
+uv add akin
+```
 
 ### API Documentation
 See the [API documentation here](https://justinbt1.github.io/Akin/api/api_ref/) for API 
@@ -43,14 +49,14 @@ labels = [i for i in range(1, len(content))]
 
 # Generate MinHash signatures.
 minhash = UniMinHash(n_gram=9, permutations=100, hash_bits=64, seed=3)
-signatures  minhash.transform(content)
+signatures = minhash.transform(content)
 
 # Create LSH model.
-lsh = LSH(permutations=minhash.permutations)
+lsh = LSH(jaccard_similarity=0.5, probability=0.95)
 lsh.update(signatures, labels)
 
 # Query to find near duplicates for text 1.
-print(lsh.query(1, min_jaccard=0.5))
+print(lsh.query(1))
 >>> [8, 4]
 
 # Generate minhash signature and add new texts to LSH model.
@@ -62,18 +68,8 @@ new_text = [
 
 new_labels = ['doc1', 'doc2']
 
-new_minhash = MinHash(new_text, n_gram=9, permutations=100, hash_bits=64, seed=3)
-
+new_signatures = minhash.transform(new_text)
 lsh.update(new_minhash, new_labels)
 
 # Remove text and label from model.
 lsh.remove(5)
-
-# Return adjacency list for all similar texts.
-adjacency_list = lsh.adjacency_list(min_jaccard=0.55)
-print(adjacency_list)
->>> {
-        1: ['doc1', 4], 2: ['doc2'], 3: [], 4: [1, 'doc1'], 6: [], 
-        7: [], 8: [], 9: [], 'doc1': [8, 1, 4], 'doc2': [2]
-    }
-```
