@@ -6,12 +6,11 @@ class _MinHash:
     """ MinHash base class.
 
     Attributes:
-        n_gram (int): Number of characters used in each shingle.
-        n_gram_type (str): Type of n gram used for shingles.
-        permutations (int): Number of random permutations used to generate
-            signatures.
-        hash_bits (int): Hash value size used to generate signatures.
-        seed (int): Seed used to generate signatures.
+        n_gram (int): Number of characters or terms in each shingle.
+        n_gram_type (str): Whether shingles contain characters or terms.
+        permutations (int): Number of minhash permutations in each signature.
+        hash_bits (int): Hash bit size used for signatures.
+        seed (int): Seed used to hash signatures.
 
     """
     def __init__(
@@ -22,16 +21,14 @@ class _MinHash:
         hash_bits=64,
         seed=1
     ):
-        """ Generates a minhash signature matrix for texts in a corpus.
+        """Configure shingling and hashing for MinHash implementation.
 
         Args:
-            n_gram (int): Number of characters to be used in each shingle.
-            n_gram_type (str): Type of n gram to use for shingles, must be
-                char or term.
-            permutations (int): Number of hash values in each document
-                signature.
-            hash_bits (int): Hash value size, must be 32, 64 or 128 bit.
-            seed (int): Seeds from which to generate random hash function.
+            n_gram (int): Number of characters or terms per shingle. Must be > 2.
+            n_gram_type (str): Shingle text by 'char' or 'term'.
+            permutations (int): Number of hash values in each signature.
+            hash_bits (int): Hash size; must be 32, 64, or 128.
+            seed (int): 32bit seed for reproducible hash generation.
 
         """
         if not isinstance(n_gram, int):
@@ -73,16 +70,16 @@ class _MinHash:
         self.hash_range = np.random.default_rng(seed)
 
     def _k_shingles(self, texts):
-        """ Generates shingles for each input text.
+        """Yield a set of shingles for each input text.
 
-        Break strings into k overlapping shingles consisting of characters or
-        terms of n_gram size.
+        Each shingle contains n_gram overlapping characters or whitespace-separated
+        terms.
 
         Args:
-            texts (list): list, array or Pandas series of input texts.
+            texts (str | iterable[str]): One text, or an iterable of texts.
 
         Yields:
-            list: Shingle list generated for each input text.
+            set[str]: Unique shingles from each input text.
 
         """
         if isinstance(texts, str):
@@ -114,11 +111,11 @@ class _MinHash:
         """ Performs hashing using seed generated hash.
 
         Args:
-            shingle(str): Text shingle to hash.
-            seed(int): Seed for generating hash function.
+            shingle (str): Text shingle to hash.
+            seed (int): Seed for the hash function.
 
         Returns:
-            int: Hashed shingle.
+            int: Hash value of the shingle.
 
         """
         if self.hash_bits == 64:
@@ -132,12 +129,14 @@ class _MinHash:
 
 
 class KMinHash(_MinHash):
-    """ Generates minhash signatures by concatenating the min value of j
-    permutation hashes.
+    """Generate signatures using independent seeded hash functions.
+
+    For each permutation, the minimum hash value across a document's unique
+    shingles is selected.
 
     Attributes:
-        hash_seeds (np.array): randomly generated seeds for each of j
-            permutation hashes.
+        hash_seeds (numpy.ndarray): Randomly generated distinct seeds, one for each
+            permutation.
 
     """
     def __init__(self, *args, **kwargs):
@@ -150,15 +149,18 @@ class KMinHash(_MinHash):
         )
 
     def _multi_hash(self, shingles):
-        """ Generates a texts minhash signature using multi-hash method.
+        """Generate one signature per document using multiple independent hashes.
 
-        Uses i random hashes for j permutations selecting the minimum hash
-            value each time to build each texts hash signature.
+        Each seed produces a hash for every shingle, and the minimum hash for that seed
+        becomes the corresponding signature component.
 
-        Slower but more stable than bottom-k hash method.
+        Slower but more stable than the single hash densified OPH method of UniMinHash.
+
+        Args:
+            shingles (iterable[set[str]]): Unique shingles for each document.
 
         Returns:
-            list: List of text signatures generated using multi-hash method.
+            list[tuple[int, ...]]: One signature of length permutations per document.
 
         """
         signatures = []
@@ -182,14 +184,14 @@ class KMinHash(_MinHash):
         return signatures
 
     def transform(self, text_corpus):
-        """ Transform text to Minhash arrays using multi-hash method.
+        """Convert text into signatures using multiple independent seeded hashes.
 
         Args:
-            text_corpus(list): 2D Iterable containing text content of each
-                document.
+            text_corpus (iterable[str]): Iterable containing one text string per
+            document.
 
         Returns:
-            list: List of minhash tuple signatures.
+            list[tuple[int, ...]]: One signature of length "permutations" per document.
 
         """
         shingles = self._k_shingles(text_corpus)
@@ -198,15 +200,11 @@ class KMinHash(_MinHash):
 
 
 class UniMinHash(_MinHash):
-    """ Generates minhash signatures using One Permutation Hashing (OPH)
-    with optimal densification.
+    """Generate signatures using one-permutation hashing (OPH) with densification.
 
-    Each shingle is hashed once. The hash range is split into
-    ``permutations`` equal bins and the minimum hash in each bin forms one
-    position of the signature. Empty bins are filled from a non-empty bin
-    chosen by a seeded probe sequence that is shared by every document, so
-    signature positions stay aligned across documents and are compatible
-    with LSH banding.
+    Each shingle is hashed once and assigned to a bin (one bin per permutation).
+    The minimum hash in each bin is used; empty bins are filled from a non-empty bin
+    using a deterministic probe sequence.
 
     """
     def __init__(self, *args, **kwargs):
@@ -215,7 +213,7 @@ class UniMinHash(_MinHash):
         self._probe_cache = {}
 
     def _probe(self, bin_id, attempt):
-        """ Bin to borrow from for an empty bin, identical for all documents.
+        """ Return the bin to borrow from for an empty bin.
 
         Probe sequences are cached per bin and extended on demand.
         """
@@ -230,13 +228,14 @@ class UniMinHash(_MinHash):
         return sequence[attempt]
 
     def _one_permutation_hash(self, shingles):
-        """ Generates signatures using one permutation hashing.
+        """Generate and densify one-permutation signatures.
 
         Args:
-            shingles (iterable): Shingle lists, one per document.
+            shingles (iterable[set[str]]): Unique shingles for each document.
 
         Returns:
-            list: List of minhash tuple signatures.
+            list[tuple[int, ...]]: One fully populated signature of length
+            "permutations" per document.
 
         """
         n_bins = self.permutations
@@ -265,14 +264,13 @@ class UniMinHash(_MinHash):
         return signatures
 
     def transform(self, text_corpus):
-        """ Transform text to Minhash arrays using one permutation hashing.
+        """ Transform text to Minhash arrays using one permutation hashing (OPH).
 
         Args:
-            text_corpus(list): 2D Iterable containing text content of each
-                document.
+            text_corpus (terable[str]): Iterable containing one text per document.
 
         Returns:
-            list: List of minhash tuple signatures.
+            list[tuple[int, ...]]: One signature of length "permutations" per document.
 
         """
         shingles = self._k_shingles(text_corpus)

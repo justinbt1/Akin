@@ -4,15 +4,16 @@ from akin import DictionaryArray, optimise
 
 
 class LSH:
-    """ Locality Sensitive Hashing.
+    """ Index labelled MinHash signatures using locality sensitive hashing.
 
     Attributes:
-        permutations (int): Number of permutations used in MinHash.
-        no_of_bands (int): Number of bands used in model.
-        seed (int): Random seed used for hashing.
+        permutations (int): Number of values in each MinHash signature.
+        n_bands (int): Number of bands in each signature.
+        n_rows (int): Number of signature values in each band.
+        seed (int): Seed used to hash bands into buckets.
+        keys (dict): Mapping from document labels to stored signatures.
 
     """
-
     def __init__(
             self,
             permutations,
@@ -22,13 +23,22 @@ class LSH:
             n_rows=None,
             seed=1
     ):
-        """ Initialize the LSH object.
+        """ Initialize an index with explicit or automatically selected bands.
+
+        Provide both n_bands and n_rows, with their product equal to permutations, or
+        provide jaccard_similarity for automatic selection. The probability model used
+        for automatic selection assumes independent MinHash positions and is
+        approximate for densified OPH signatures.
 
         Args:
-            no_of_bands (int): Number of bands to break minhash signature into.
-            permutations (int): Number of permutations (hashes) in minhash
-                signature.
-            seed (int): Random seed used for hashing.
+            permutations (int): Number of values in each MinHash signature.
+            jaccard_similarity (float, optional): Target Jaccard similarity used for
+                automatic band selection, not a query filter.
+            probability (float, optional): Target probability of retrieving a candidate
+                at jaccard_similarity. Defaults to 0.95.
+            n_bands (int, optional): Explicit number of bands.
+            n_rows (int, optional): Explicit number of values per band.
+            seed (int, optional): Seed for band hashing. Defaults to 1.
 
         """
         if n_bands and n_rows:
@@ -62,7 +72,10 @@ class LSH:
         """ Break signatures into bands and hash components to buckets.
 
         Args:
-            signature (tuple): a minhash signature.
+            signature (tuple): MinHash signature to split into bands.
+
+        Returns:
+            list: Bucket identifiers in band order.
 
         """
         band_hashes = []
@@ -78,14 +91,14 @@ class LSH:
             query_signature,
             candidates
     ):
-        """ Identify candidate duplicates and check Jaccard Similarity.
+        """ Estimate Jaccard similarity from matching signature positions.
 
         Args:
-            query_signature (tuple): Query minhash signature.
-            candidates (dict): List of bucket ids.
+            query_signature (tuple): Query MinHash signature.
+            candidates (set): Candidate document labels.
 
         Returns:
-            list: Near duplicate document ids.
+            list: Unsorted (estimated_similarity, label) tuples.
 
         """
         matches = []
@@ -99,11 +112,14 @@ class LSH:
         return matches
 
     def update(self, minhash_signatures, labels):
-        """ Updates LSH object with new MinHash matrix and labels.
+        """ Add document signatures and their labels to the index.
+
+        All signatures must contain permutations values and use the same MinHash
+        configuration, hash seeds and container representation.
 
         Args:
-            minhash_signatures (list): new minhash signatures to add to LSH
-                object.
+            minhash_signatures (list): List of MinHash signatures.
+            labels (list): Corresponding unique, hashable document labels.
 
         """
         if len(minhash_signatures[0]) != self.permutations:
@@ -130,7 +146,7 @@ class LSH:
         """ Remove label and associated text signature from model.
 
         Args:
-            minhash_signatures (list): minhash signatures to remove from model.
+            labels (iterable): Labels of indexed documents to remove.
 
         """
         for label in labels:
@@ -149,21 +165,16 @@ class LSH:
             label,
             include_similarity=False
     ):
-        """ Returns near duplicates from model.
-
-        Takes a provided text label and returns a list of labels for texts
-        whose similarity with the provided text is above a provided threshold.
-
-        Can be used to create a recommendation model.
+        """ Returns near duplicates from model for estimated similarity threshol
 
         Args:
-            minhash_signature (tuple): minhash signature of text for which to
-                return near duplicates.
-            include_similarity (bool): return similarity alongside estimated
-                near duplicates.
+            label (hashable): Label of the indexed document to query.
+            include_similarity (bool, optional): Include positional MinHash
+                similarity estimates. Defaults to False.
 
         Returns:
-            list: Candidate duplicates for provided text label.
+            list: Candidate labels, or (estimated_similarity, label) tuples
+                when include_similarity is True.
 
         """
         candidates = set()
