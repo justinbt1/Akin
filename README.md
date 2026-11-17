@@ -4,8 +4,9 @@
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/akin)
 
 <br>
-Python library for detecting near duplicate texts in a corpus at scale using Locality Sensitive Hashing.
+Python library for detecting near duplicate texts in a corpus at scale using Locality Sensitive Hashing.  
 
+<br>
 <br>
 This algorithm identifies similar texts in 
 a corpus by efficiently estimating their Jaccard similarity with sub-linear time complexity. This can be used to detect 
