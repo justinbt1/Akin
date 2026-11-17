@@ -78,3 +78,4 @@ print(lsh.query(0))
 lsh.remove([7])
 print(lsh.query(0))
 >>> ['doc1', 3]
+```
