@@ -199,7 +199,7 @@ class KMinHash(_MinHash):
         return self._multi_hash(shingles)
 
 
-class UniMinHash(_MinHash):
+class OPMinHash(_MinHash):
     """Generate signatures using one-permutation hashing (OPH) with densification.
 
     Each shingle is hashed once and assigned to a bin (one bin per permutation).

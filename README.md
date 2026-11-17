@@ -27,7 +27,7 @@ and usage guide.
 
 ### Quick Start Example
 ``` python
-from akin import UniMinHash, LSH
+from akin import OPMinHash, LSH
 
 content = [
     'Jupiter is primarily composed of hydrogen with a quarter of its mass being helium',
@@ -48,7 +48,7 @@ content = [
 labels = [i for i in range(0, len(content))]
 
 # Generate MinHash signatures.
-minhash = UniMinHash(n_gram=9, permutations=100, hash_bits=64, seed=3)
+minhash = OPMinHash(n_gram=9, permutations=100, hash_bits=64, seed=3)
 signatures = minhash.transform(content)
 
 # Create LSH model.
