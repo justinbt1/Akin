@@ -1,10 +1,17 @@
 def hyperparameters(fixed_n, target_s, target_p):
-    """ Optimise LSH hyperparameters for target Jaccard similarity and probability.
+    """ Select LSH bands and rows closest to a target retrieval probability.
+
+    Consider factor pairs where bands * rows equals fixed_n, minimising the
+    absolute difference between target_p and 1 - (1 - target_s ** rows) ** bands.
 
     Args:
-        fixed_n
-        target_s
-        target_p
+        fixed_n (int): Positive number of values in each MinHash signature.
+        target_s (float): Target Jaccard similarity, between 0 and 1.
+        target_p (float): Candidate retrieval probability at target_s, between 0 and 1.
+
+    Returns:
+        tuple[int, int, float]: Number of bands, number of rows per band, and etrieval
+        probability at target_s.
 
     """
     best_b, best_r = None, None
