@@ -82,14 +82,6 @@
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-bs-level="2"><a href="#uniminhash" class="nav-link">UniMinHash</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-bs-level="2"><a href="#multiminhash" class="nav-link">MultiMinHash</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
             <li class="nav-item" data-bs-level="2"><a href="#lsh" class="nav-link">LSH</a>
               <ul class="nav flex-column">
               </ul>
@@ -103,145 +95,106 @@
 
 <h1 id="akin-api-reference">Akin API Reference</h1>
 <h2 id="minhash">MinHash</h2>
-<p>The Akin library offers two classes for generating the MinHash object: UniMinHash and MultiMinHash.</p>
-<h2 id="uniminhash">UniMinHash</h2>
-<p>Creates a MinHash object that contains matrix of Minhash Signatures for each text.</p>
-<p>Texts are shingled and hashed using the bottom-k variant of the MinHash algorithm, each text is hashed once and the k-smallest values selected for k permutations. This method is less computationally intensive than multi_hash but also less stable.</p>
-<pre><code class="language-python">akin.UniMinHash(
-    text, 
-    n_gram=9, 
-    n_gram_type='char', 
-    permutations=100, 
-    hash_bits=64, 
-    seed=None
-)
+<p>Akin provides <code>KMinHash</code> and <code>OPMinHash</code> for creating fixed-length signatures
+from text. Construct a MinHash object with its configuration, then call
+<code>transform</code> with one string or an iterable of strings. The result is a list of
+signature tuples, one per input text.</p>
+<p>Both classes create overlapping shingles. With <code>n_gram_type="char"</code>, shingles
+contain characters; with <code>n_gram_type="term"</code>, they contain whitespace-separated
+terms. Duplicate shingles within a text are collapsed.</p>
+<h3 id="common-parameters">Common parameters</h3>
+<p><code>n_gram</code> <code>int, optional, default: 9</code><br />
+Number of characters or terms in each shingle. Must be at least 2. A text
+without a complete shingle raises <code>ValueError</code>.</p>
+<p><code>n_gram_type</code> <code>str, optional, default: "char"</code><br />
+Use <code>"char"</code> for character shingles or <code>"term"</code> for whitespace-separated
+term shingles.</p>
+<p><code>permutations</code> <code>int, optional, default: 100</code><br />
+Number of values in each signature. Must be a positive integer.</p>
+<p><code>hash_bits</code> <code>int, optional, default: 64</code><br />
+Hash width. Supported values are 32, 64, and 128 bits.</p>
+<p><code>seed</code> <code>int, optional, default: 1</code><br />
+Seed used to generate hashes. Must be in the range <code>0</code> to <code>2**32 - 1</code>.
+Use the same seed and MinHash settings to generate reproducible, compatible
+signatures with the same MinHash algorithm.</p>
+<h3 id="opminhash"><code>OPMinHash</code></h3>
+<pre><code class="language-python">akin.OPMinHash(n_gram=9, n_gram_type=&quot;char&quot;, permutations=100,
+               hash_bits=64, seed=1)
+</code></pre>
+<p>Uses one-permutation hashing (OPH): each unique shingle is hashed once and
+assigned to one of <code>permutations</code> bins. The minimum hash in each bin is used
+in the signature. Empty bins are filled through deterministic densification.</p>
+<h4 id="methods">Methods</h4>
+<p><code>.transform(text_corpus)</code><br />
+Generate signatures for a string or iterable of strings. Returns a list of
+tuples, each containing <code>permutations</code> unsigned integer hash values.</p>
+<h4 id="attributes">Attributes</h4>
+<p><code>n_gram</code>, <code>n_gram_type</code>, <code>permutations</code>, <code>hash_bits</code>, and <code>seed</code> contain the
+values used to configure the MinHash object.</p>
+<h3 id="kminhash"><code>KMinHash</code></h3>
+<pre><code class="language-python">akin.KMinHash(n_gram=9, n_gram_type=&quot;char&quot;, permutations=100,
+              hash_bits=64, seed=1)
+</code></pre>
+<p>Uses an independent seeded hash function for each signature position. Each
+position contains the minimum hash value for that function across the text's
+unique shingles.</p>
+<h4 id="methods_1">Methods</h4>
+<p><code>.transform(text_corpus)</code><br />
+Generate signatures for a string or iterable of strings. Returns a list of
+tuples, each containing <code>permutations</code> unsigned integer hash values.</p>
+<h4 id="attributes_1">Attributes</h4>
+<p><code>n_gram</code>, <code>n_gram_type</code>, <code>permutations</code>, <code>hash_bits</code>, and <code>seed</code> contain the
+values used to configure the MinHash object. <code>hash_seeds</code> contains the
+generated seed for each signature position.</p>
+<h2 id="lsh">LSH</h2>
+<p><code>LSH</code> indexes labelled MinHash signatures by splitting each signature into
+bands and hashing each band into a bucket. Documents that share at least one
+bucket are returned as candidates.</p>
+<pre><code class="language-python">akin.LSH(permutations, jaccard_similarity=None, probability=0.95,
+         n_bands=None, n_rows=None, seed=1)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
-<p>text <code>{list or ndarray}</code><br />
-Iterable containing strings of text for each text in a corpus.  </p>
-<p>n_gram <code>int, optional, default: 9</code><br />
-Size of each overlapping text shingle to break text into prior to hashing. Shingle size should be carefully selected dependent on average text length as too low a shingle size will yield false similarities, whereas too high a shingle size will fail to return similar documents.  </p>
-<p>For character shingles a size of 5 is recommended for shorter texts such as emails, the default size of 9 is recommended for longer texts or documents.</p>
-<p>n_gram_type <code>str, optional, default: 'char'</code><br />
-Type of n gram to use for shingles, must be 'char' to split text into character shingles or 'term' to split text into overlapping sequences of words.</p>
-<p>permutations <code>int, optional, default: 100</code><br />
-Number of randomly sampled hash values to use for generating each texts minhash signature. Intuitively the larger the number of permutations, the more accurate the estimated Jaccard similarity between the texts but longer the algorithm will take to run.</p>
-<p>hash_bits <code>int, optional, default: 64</code><br />
-Hash value size to be used to generate minhash signatures from shingles, must be 32, 64 or 128 bit.  </p>
-<p>Hash value size should be chosen based on text length and a trade off between performance and accuracy. Lower hash values risk false hash collisions leading to false similarities between documents for larger corpora of texts.</p>
-<p>seed <code>int, optional, default: None</code><br />
-Seed from which to generate random hash function, necessary for reproducibility or to allow updating of the LSH model with new minhash values later.</p>
-<h3 id="properties">Properties</h3>
-<p>n_gram: <code>int</code><br />
-Returns size of each overlapping text shingle used to create minhash signatures.</p>
-<p>n_gram_type: <code>int</code><br />
-Returns type of n-gram used for text shingling.</p>
-<p>permutations: <code>int</code><br />
-Returns number of permutations used to create signatures.</p>
-<p>hash_bits: <code>int</code><br />
-Returns hash value size used to create signatures.</p>
-<p>seed: <code>int</code><br />
-Returns seed value used to generate random hashes in minhash function.</p>
-<p>signatures: <code>numpy.array</code><br />
-Returns matrix of text signatures generated by minhash function.<br />
-n = text row, m = selected permutations.</p>
-<h2 id="multiminhash">MultiMinHash</h2>
-<p>Creates a MinHash object that contains matrix of Minhash Signatures for each text.  </p>
-<p>Texts are shingled, then hashed once per permutation and the minimum hash value selected each time to construct a signature.  </p>
-<pre><code class="language-python">akin.MultiMinHash(
-    text, 
-    n_gram=9, 
-    n_gram_type='char', 
-    permutations=100, 
-    hash_bits=64, 
-    seed=None
-)
-</code></pre>
-<h3 id="parameters_1">Parameters</h3>
-<p>text <code>{list or ndarray}</code><br />
-Iterable containing strings of text for each text in a corpus.</p>
-<p>n_gram <code>int, optional, default: 9</code><br />
-Size of each overlapping text shingle to break text into prior to hashing. Shingle size should be carefully selected dependent on average text length as too low a shingle size will yield false similarities, whereas too high a shingle size will fail to return similar documents.  </p>
-<p>For character shingles a size of 5 is recommended for shorter texts such as emails, the default size of 9 is recommended for longer texts or documents.</p>
-<p>n_gram_type <code>str, optional, default: 'char'</code><br />
-Type of n gram to use for shingles, must be 'char' to split text into character shingles or 'term' to split text into overlapping sequences of words.</p>
-<p>permutations <code>int, optional, default: 100</code><br />
-Number of randomly sampled hash values to use for generating each texts minhash signature. Intuitively the larger the number of permutations, the more accurate the estimated Jaccard similarity between the texts but longer the algorithm will take to run.</p>
-<p>hash_bits <code>int, optional, default: 64</code><br />
-Hash value size to be used to generate minhash signatures from shingles, must be 32, 64 or 128 bit. Hash value size should be chosen based on text length and a trade off between performance and accuracy. Lower hash values risk false hash collisions leading to false similarities between documents for larger corpora of texts.</p>
-<p>seed <code>int, optional, default: None</code><br />
-Seed from which to generate random hash function, necessary for reproducibility or to allow updating of the LSH model with new minhash values later.</p>
-<h3 id="properties_1">Properties</h3>
-<p>n_gram: <code>int</code><br />
-Returns size of each overlapping text shingle used to create minhash signatures.</p>
-<p>n_gram_type: <code>int</code><br />
-Returns type of n-gram used for text shingling.</p>
-<p>permutations: <code>int</code><br />
-Returns number of permutations used to create signatures.</p>
-<p>hash_bits: <code>int</code><br />
-Returns hash value size used to create signatures.</p>
-<p>seed: <code>int</code><br />
-Returns seed value used to generate random hashes in minhash function.</p>
-<p>signatures: <code>numpy.array</code><br />
-Returns matrix of text signatures generated by minhash function.<br />
-n = text row, m = selected permutations.</p>
-<h2 id="lsh">LSH</h2>
-<p>Creates an LSH model of text similarity that can be used to return similar texts based on estimated Jaccard similarity.</p>
-<pre><code class="language-python">akin.LSH(permutations, no_of_bands=None, seed=1)
-</code></pre>
-<h3 id="parameters_2">Parameters</h3>
-<p>permutations <code>int</code><br />
-Number of permutations used in minhashing signatures MultiMinHash or UniMultiHash.</p>
-<p>no_of_bands <code>optional, default: permutations // 2</code><br />
-Number of bands to break minhash signature into before hashing into buckets. A smaller number of bands will result in a stricter algorithm, requiring larger possibly leading to false negatives missing some similar texts, whereas a higher number may lead to false similarities.</p>
-<p>seed <code>int optional, default: 1</code><br />
-Seed from which to generate random hash function, necessary for reproducibility or to allow updating of the LSH model with new minhash values later.</p>
-<h3 id="methods">Methods</h3>
-<pre><code class="language-python">.update(minhash_signatures, labels)
-</code></pre>
-<p>Updates model with minhash signatures and their corresponding labels.</p>
-<p>minhash <code>list</code><br />
-MinHash object containing signatures of new texts, parameters must match any previous MinHash objects.  </p>
-<p>new_labels <code>list</code><br />
-List, array or Pandas series containing unique labels for each text.</p>
-<pre><code class="language-python">.query(label, min_jaccard=None, sensitivity=1, include_similarity=False)
-</code></pre>
-<p>Returns list of near-duplicates for text with provided label.</p>
-<p>label <code>str</code><br />
-Label of text for which to return near-duplicates.  </p>
-<p>min_jaccard <code>float optional, default: None</code><br />
-Minimum Jaccard Similarity for texts to be returned as near duplicates. 
-If specified the Jaccard similarity for each candidate near-duplicate signature will be explicitly calculated, 
-improving accuaracy but also increasing run time.</p>
-<p>sensitivity <code>int optional, default: 1</code><br />
-umber of unique buckets two ids must co-occur in to be considered a candidate near-duplicate pair.</p>
-<p>include_similarity <code>bool optional, default: False</code><br />
-Return similarity score alongside estimated near duplicates, if selected scores are returned as a list of (label, score) tuples.
-Note, a min_jaccard score must be provided.</p>
-<pre><code class="language-python">.remove(labels)
-</code></pre>
-<p>Remove label and associated text signature from model.</p>
-<p>labels <code>list</code><br />
-List of labels to remove from the LSH model.</p>
-<pre><code class="language-python">.adjacency_list(labels=None, min_jaccard=None, sensitivity=1)
-</code></pre>
-<p>Returns an adjacency list dictionary mapping all labels to their estimated near duplicates. 
-Can be used to create an undirected graph for texts in the LSH object.</p>
-<p>label <code>list optional, default: None</code> <br />
-List of labels to limit the adjacency list to.</p>
-<p>min_jaccard <code>float optional, default: None</code><br />
-Minimum Jaccard Similarity for texts to be returned as near duplicates. 
-If specified the Jaccard similarity for each candidate near-duplicate signature will be explicitly calculated, 
-improving accuaracy but also increasing run time.</p>
-<p>sensitivity <code>int optional, default: 1</code><br />
-umber of unique buckets two ids must co-occur in to be considered a candidate near-duplicate pair.</p>
-<h3 id="properties_2">Properties</h3>
-<p>no_of_bands: <code>int</code><br />
-Number of bands used in LSH model.</p>
-<p>seed: <code>int</code><br />
-Seed used to generate random hash function.</p>
-<p>permutations: <code>int</code><br />
-Number of permutations used to create minhash signatures used in LSH model.</p></div>
+<p><code>permutations</code> <code>int</code><br />
+Length of each MinHash signature indexed by this object.</p>
+<p><code>jaccard_similarity</code> <code>float, optional, default: None</code><br />
+Target similarity used to select banding parameters automatically. This is
+not a query-time similarity threshold.</p>
+<p><code>probability</code> <code>float, optional, default: 0.95</code><br />
+Target probability of retrieving a candidate at <code>jaccard_similarity</code>.
+Used only when selecting banding parameters automatically.</p>
+<p><code>n_bands</code> <code>int, optional, default: None</code><br />
+Explicit number of bands. Must be provided with <code>n_rows</code>.</p>
+<p><code>n_rows</code> <code>int, optional, default: None</code><br />
+Number of signature values per band. Must be provided with <code>n_bands</code>, and
+<code>n_bands * n_rows</code> must equal <code>permutations</code>.</p>
+<p><code>seed</code> <code>int, optional, default: 1</code><br />
+Seed used to hash bands into buckets.</p>
+<p>Provide both <code>n_bands</code> and <code>n_rows</code>, or provide <code>jaccard_similarity</code> for
+automatic band selection.</p>
+<h3 id="methods_2">Methods</h3>
+<p><code>.update(minhash_signatures, labels)</code><br />
+Add signatures and their corresponding labels to the index. The number of
+labels must match the number of signatures. Labels must be unique and
+hashable, and signatures must have the configured length and compatible
+MinHash algorithm, seed, and settings.</p>
+<p><code>.query(label, include_similarity=False)</code><br />
+Return candidate labels for an indexed document, excluding the queried
+label. Candidate ordering is not guaranteed. If <code>include_similarity=True</code>,
+return <code>(estimated_similarity, label)</code> tuples. The estimate is the fraction
+of matching signature positions; no similarity threshold is applied.</p>
+<p><code>.remove(labels)</code><br />
+Remove the indexed documents with the supplied iterable of labels.</p>
+<h3 id="attributes_2">Attributes</h3>
+<p><code>n_bands</code><br />
+Number of bands in the index.</p>
+<p><code>n_rows</code><br />
+Number of signature values in each band.</p>
+<p><code>permutations</code><br />
+Expected length of each indexed MinHash signature.</p>
+<p><code>seed</code><br />
+Seed used to hash bands.</p>
+<p><code>keys</code><br />
+Mapping from indexed labels to their stored signatures.</p></div>
             </div>
         </div>
 
